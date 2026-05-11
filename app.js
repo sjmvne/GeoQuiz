@@ -79,7 +79,7 @@ function renderMap(){
   svg=d3.select(container).insert('svg',':first-child').attr('width','100%').attr('height','100%')
     .attr('viewBox',`0 0 ${w} ${h}`).attr('preserveAspectRatio','xMidYMid meet');
   mapGroup=svg.append('g');
-  const proj=d3.geoMercator().fitExtent([[w*.05,h*.05],[w*.95,h*.95]],geoData);
+  const proj=d3.geoMercator().fitExtent([[-w*.05,-h*.05],[w*1.05,h*1.05]],geoData);
   pathGenerator=d3.geoPath().projection(proj);
   mapGroup.selectAll('path').data(geoData.features).enter().append('path')
     .attr('d',pathGenerator).attr('class','map-path')
