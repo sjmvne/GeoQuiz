@@ -207,6 +207,12 @@ function renderMap(){
     .attr('d',pathGenerator).attr('class','map-path')
     .on('click',handleMapClick)
     .on('mouseenter',showTooltip).on('mousemove',moveTooltip).on('mouseleave',hideTooltip);
+    
+  svg.on('click', (event) => {
+    if(event.target.tagName !== 'path' && currentMode === 'explore') {
+      closeExploreSheet();
+    }
+  });
   zoomBehavior=d3.zoom().scaleExtent([1,20]).translateExtent([[-w*.5,-h*.5],[w*1.5,h*1.5]])
     .on('zoom',e=>mapGroup.attr('transform',e.transform));
   svg.call(zoomBehavior);
@@ -573,4 +579,26 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('type-form').addEventListener('submit',e=>{e.preventDefault();handleTypeSubmit();});
   $('btn-clear-type').addEventListener('click',clearTypeUI);
   $('btn-delete-answer').addEventListener('click',deleteTypedAnswer);
+
+  // Swipe down to close explore sheet
+  let exploreTouchStartY = 0;
+  $('sheet-explore').addEventListener('touchstart', e => {
+    exploreTouchStartY = e.touches[0].clientY;
+  }, {passive: true});
+
+  $('sheet-explore').addEventListener('touchmove', e => {
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - exploreTouchStartY;
+    const isAtTop = $('sheet-explore').scrollTop <= 0;
+    if (diff > 60 && isAtTop) {
+      closeExploreSheet();
+    }
+  }, {passive: true});
 });
+
+function closeExploreSheet() {
+  if (currentMode !== 'explore') return;
+  if(mapGroup) mapGroup.selectAll('.map-path').classed('active-explore', false);
+  $('explore-prompt').classList.remove('hidden');
+  $('explore-info').classList.add('hidden');
+}

@@ -125,14 +125,16 @@
                 <div class="progress-fill" id="click-bar" style="width:0%"></div>
             </div>
             <div id="target-box"
-                class="bg-slate-50 rounded-2xl p-4 text-center mb-3 min-h-[80px] flex flex-col items-center justify-center transition-all">
-                <h2 id="target-name" class="text-2xl font-extrabold text-slate-800"></h2>
-                <img id="target-flag" src="" alt="" class="hidden w-24 rounded shadow-sm border border-slate-200">
+                class="bg-slate-50 rounded-2xl p-3 text-center mb-2 min-h-[60px] flex flex-col items-center justify-center transition-all">
+                <h2 id="target-name" class="text-xl font-extrabold text-slate-800"></h2>
+                <img id="target-flag" src="" alt="" class="hidden w-20 mt-1 rounded shadow-sm border border-slate-200">
             </div>
-            <button class="btn-3d slate" id="btn-skip" style="padding:10px 16px"><span class="icon text-base">⏭️</span>
-                <div class="label text-sm">Salta</div>
-            </button>
-            <button class="btn-cta mt-3" id="btn-finish-click" onclick="finishGame()">Termina e Verifica</button>
+            <div class="flex gap-2">
+                <button class="btn-3d slate flex-1 !py-2" id="btn-skip" style="min-height: 44px">
+                    <span class="icon text-sm mr-1">⏭️</span><span class="label text-sm">Salta</span>
+                </button>
+                <button class="btn-cta flex-1 !py-2 !mt-0 !text-sm" id="btn-finish-click" onclick="finishGame()" style="min-height: 44px">Termina</button>
+            </div>
         </div>
         <!-- Bottom Sheet: Type mode -->
         <div id="sheet-type" class="bottom-sheet" style="display:none">
@@ -145,24 +147,24 @@
             <div class="progress-bar">
                 <div class="progress-fill" id="type-bar" style="width:0%;background:#a855f7"></div>
             </div>
-            <div id="type-prompt" class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 text-center">
-                <p class="text-sm font-bold text-purple-800">👆 Tocca uno stato sulla mappa per scriverne il nome.</p>
+            <div id="type-prompt" class="bg-purple-50 border-2 border-purple-200 rounded-xl p-3 text-center mb-2">
+                <p class="text-xs font-bold text-purple-800">👆 Tocca uno stato sulla mappa per scriverne il nome.</p>
             </div>
             <div id="type-input-area" class="hidden">
                 <form id="type-form" class="relative mb-2">
                     <input type="text" id="type-input" placeholder="Scrivi il nome..." autocomplete="off"
-                        class="w-full p-3 pr-16 border-2 border-slate-300 rounded-2xl bg-white text-slate-700 font-bold text-base focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100">
+                        class="w-full p-2 pr-14 border-2 border-slate-300 rounded-xl bg-white text-slate-700 font-bold text-sm focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100">
                     <button type="submit"
-                        class="absolute right-1.5 top-1.5 bottom-1.5 bg-purple-600 text-white px-4 rounded-xl font-bold hover:bg-purple-700 transition-colors">OK</button>
+                        class="absolute right-1.5 top-1.5 bottom-1.5 bg-purple-600 text-white px-3 rounded-lg font-bold hover:bg-purple-700 transition-colors">OK</button>
                 </form>
-                <div class="flex justify-between">
+                <div class="flex justify-between mb-2">
                     <button type="button" id="btn-clear-type"
                         class="text-xs text-slate-500 hover:text-red-500 font-bold">Annulla</button>
                     <button type="button" id="btn-delete-answer"
                         class="hidden text-xs text-red-500 hover:text-red-700 font-bold">Cancella risposta</button>
                 </div>
             </div>
-            <button class="btn-cta mt-3" onclick="finishGame()">Termina e Verifica</button>
+            <button class="btn-cta !py-2 !mt-0 !text-sm w-full" onclick="finishGame()" style="min-height: 44px">Termina e Verifica</button>
         </div>
         <!-- Bottom Sheet: Explore -->
         <div id="sheet-explore" class="bottom-sheet" style="display:none; max-height:70dvh; overflow-y:auto">
