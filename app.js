@@ -80,7 +80,15 @@ function renderMap(){
     .attr('viewBox',`0 0 ${w} ${h}`).attr('preserveAspectRatio','xMidYMid meet');
   mapGroup=svg.append('g');
   const fitFeatures = geoData.features.filter(f => d3.geoArea(f) > 0.002);
-  const proj=d3.geoMercator().fitExtent([[0,0],[w,h]], {type: "FeatureCollection", features: fitFeatures.length > 0 ? fitFeatures : geoData.features});
+  const proj=d3.geoMercator();
+  
+  if (currentZone === 'america') {
+    proj.rotate([100, 0]);
+  } else if (currentZone === 'asia') {
+    proj.rotate([-100, 0]);
+  }
+  
+  proj.fitExtent([[0,0],[w,h]], {type: "FeatureCollection", features: fitFeatures.length > 0 ? fitFeatures : geoData.features});
   proj.clipExtent([[0,0],[w,h]]);
   pathGenerator=d3.geoPath().projection(proj);
   mapGroup.selectAll('path').data(geoData.features).enter().append('path')
