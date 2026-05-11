@@ -526,3 +526,75 @@ body {
 .alignDivCenter {
   justify-self: center;
 }
+
+/* ============= EXPLORE ENCYCLOPEDIA ============= */
+.exp-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9
+}
+
+.exp-data-card {
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0
+}
+
+.exp-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #94a3b8;
+  margin-bottom: 2px
+}
+
+.exp-value {
+  font-weight: 700;
+  color: #334155;
+  font-size: 13px;
+  word-break: break-word
+}
+
+.exp-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid #bfdbfe;
+  transition: background .2s
+}
+
+.exp-link-btn:active, .exp-link-btn:hover {
+  background: #dbeafe
+}
+
+.exp-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: spin .6s linear infinite
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg) }
+}
+
+.col-span-2 {
+  grid-column: span 2
+}

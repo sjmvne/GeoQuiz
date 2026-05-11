@@ -42,6 +42,9 @@
                     <div class="zone-card" id="card-africa" onclick="selectZone('africa')">
                         <span class="emoji">🌍</span><span class="name">Africa</span><span class="count">52 stati</span>
                     </div>
+                    <div class="zone-card" id="card-world" onclick="selectZone('world')">
+                        <span class="emoji">🗺️</span><span class="name">Mondo</span><span class="count">~195 stati</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -162,27 +165,112 @@
             <button class="btn-cta mt-3" onclick="finishGame()">Termina e Verifica</button>
         </div>
         <!-- Bottom Sheet: Explore -->
-        <div id="sheet-explore" class="bottom-sheet" style="display:none">
+        <div id="sheet-explore" class="bottom-sheet" style="display:none; max-height:70dvh; overflow-y:auto">
             <div class="handle"></div>
             <div id="explore-prompt" class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 text-center">
                 <p class="text-sm font-bold text-blue-800">👆 Tocca uno stato sulla mappa per scoprirne i dettagli.</p>
             </div>
             <div id="explore-info" class="hidden">
+                <!-- Header -->
                 <div class="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100">
                     <img id="exp-flag" src="" class="w-14 rounded shadow-sm border border-slate-200" alt="">
+                    <img id="exp-coat" src="" class="w-10 hidden" alt="Stemma" style="display:none">
                     <div>
                         <h3 id="exp-name" class="text-lg font-extrabold text-slate-800"></h3>
+                        <p id="exp-official" class="text-xs text-slate-400 italic"></p>
                         <p id="exp-cap" class="text-sm text-slate-500 font-semibold"></p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div class="bg-slate-50 p-2 rounded-lg">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Popolazione</p>
-                        <p id="exp-pop" class="font-bold text-slate-700"></p>
+
+                <!-- Loader -->
+                <div id="exp-loader" class="hidden text-center py-4">
+                    <div class="exp-spinner"></div>
+                    <p class="text-xs text-slate-400 mt-2">Caricamento dettagli...</p>
+                </div>
+
+                <!-- Detailed data from API -->
+                <div id="exp-details" class="hidden">
+                    <!-- Section: General -->
+                    <p class="exp-section-title">Dati Generali</p>
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                        <div class="exp-data-card">
+                            <p class="exp-label">Popolazione</p>
+                            <p id="exp-pop" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Superficie</p>
+                            <p id="exp-area" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Continente</p>
+                            <p id="exp-continent" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Sotto-regione</p>
+                            <p id="exp-subregion" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Fuso orario</p>
+                            <p id="exp-tz" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Indice GINI</p>
+                            <p id="exp-gini" class="exp-value"></p>
+                        </div>
                     </div>
-                    <div class="bg-slate-50 p-2 rounded-lg">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Superficie</p>
-                        <p id="exp-area" class="font-bold text-slate-700"></p>
+
+                    <!-- Section: Society -->
+                    <p class="exp-section-title">Società</p>
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                        <div class="exp-data-card">
+                            <p class="exp-label">Lingue</p>
+                            <p id="exp-langs" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Valute</p>
+                            <p id="exp-currencies" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Prefisso Tel.</p>
+                            <p id="exp-phone" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Dominio</p>
+                            <p id="exp-tld" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Guida</p>
+                            <p id="exp-car" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Codice FIFA</p>
+                            <p id="exp-fifa" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Membro ONU</p>
+                            <p id="exp-un" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card">
+                            <p class="exp-label">Indipendente</p>
+                            <p id="exp-indep" class="exp-value"></p>
+                        </div>
+                        <div class="exp-data-card col-span-2">
+                            <p class="exp-label">Accesso al mare</p>
+                            <p id="exp-landlocked" class="exp-value"></p>
+                        </div>
+                    </div>
+
+                    <!-- Section: Borders -->
+                    <p class="exp-section-title">Confini</p>
+                    <div class="exp-data-card mb-3">
+                        <p id="exp-borders" class="exp-value text-sm"></p>
+                    </div>
+
+                    <!-- Section: Links -->
+                    <p class="exp-section-title">Link</p>
+                    <div class="flex gap-2 mb-2">
+                        <a id="exp-gmaps" href="#" target="_blank" rel="noopener" class="exp-link-btn">🗺️ Google Maps</a>
+                        <a id="exp-osmaps" href="#" target="_blank" rel="noopener" class="exp-link-btn">🌐 OpenStreetMap</a>
                     </div>
                 </div>
             </div>

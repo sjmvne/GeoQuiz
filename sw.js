@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geoquiz-cache-v4';
+const CACHE_NAME = 'geoquiz-cache-v5';
 const urlsToCache = [
   './', './index.html', './app.css', './app.js', './data.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
@@ -11,6 +11,11 @@ const urlsToCache = [
 ];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache))));
 self.addEventListener('fetch', e => {
+  // Don't cache REST Countries API calls (handled in-memory by app.js)
+  if (e.request.url.includes('restcountries.com')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   e.respondWith(caches.match(e.request).then(r => {
     if (r) return r;
     return fetch(e.request).then(res => {

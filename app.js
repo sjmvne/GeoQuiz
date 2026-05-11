@@ -1,5 +1,8 @@
 // ============= DATA =============
 const URL_WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+const URL_RC = "https://restcountries.com/v3.1/alpha/";
+const RC_FIELDS = "name,translations,capital,population,area,flags,coatOfArms,currencies,languages,borders,continents,latlng,maps,timezones,car,independent,landlocked,unMember,subregion,region,tld,idd,gini,fifa,demonyms";
+const apiCache = {};
 // Moved dictAmericas to data.js
 
 // ============= STATE =============
@@ -28,7 +31,7 @@ function selectZone(zoneId){
   }
   document.querySelectorAll('.zone-card').forEach(c=>c.classList.remove('active'));
   $('card-'+zoneId).classList.add('active');
-  const titles = {americas:'America', europe:'Europa', asia:'Asia', africa:'Africa'};
+  const titles = {americas:'America', europe:'Europa', asia:'Asia', africa:'Africa', world:'Mondo'};
   $('mode-title').innerText = titles[zoneId] || 'GeoQuiz';
   navigateTo('mode');
 }
@@ -52,23 +55,131 @@ async function loadMap(){
       cachedTopo=topo;
     }
     const all=topojson.feature(topo,topo.objects.countries).features;
-    let dict = {};
-    if(currentZone==='americas') dict = dictAmericas;
-    else if(currentZone==='europe') dict = dictEurope;
-    else if(currentZone==='asia') dict = dictAsia;
-    else if(currentZone==='africa') dict = dictAfrica;
 
-    let feats=all.filter(f=>dict.hasOwnProperty(f.properties.name));
-    feats.forEach(f=>{
-      const d=dict[f.properties.name];
-      Object.assign(f.properties,{itName:d.name,cap:d.cap,code:d.code,pop:d.pop,area:d.area,type:'land'});
-    });
-    geoData={type:"FeatureCollection",features:feats};
+    if(currentZone==='world'){
+      // World mode: use all features, assign basic props from TopoJSON
+      all.forEach(f=>{
+        const name = f.properties.name || 'Unknown';
+        // Try to find in any dict for code/itName
+        const entry = dictAmericas[name]||dictEurope[name]||dictAsia[name]||dictAfrica[name];
+        f.properties.itName = entry ? entry.name : name;
+        f.properties.code = entry ? entry.code : '';
+        f.properties.cap = entry ? entry.cap : '';
+        f.properties.pop = entry ? entry.pop : '';
+        f.properties.area = entry ? entry.area : '';
+        f.properties.type = 'land';
+      });
+      geoData={type:"FeatureCollection",features:all.filter(f=>f.properties.name)};
+    } else {
+      let dict = {};
+      if(currentZone==='americas') dict = dictAmericas;
+      else if(currentZone==='europe') dict = dictEurope;
+      else if(currentZone==='asia') dict = dictAsia;
+      else if(currentZone==='africa') dict = dictAfrica;
+
+      let feats=all.filter(f=>dict.hasOwnProperty(f.properties.name));
+      feats.forEach(f=>{
+        const d=dict[f.properties.name];
+        Object.assign(f.properties,{itName:d.name,cap:d.cap,code:d.code,pop:d.pop,area:d.area,type:'land'});
+      });
+      geoData={type:"FeatureCollection",features:feats};
+    }
     mapLoaded=true;
   }catch(e){
     console.error(e);
     alert("Errore nel caricamento della mappa.");
   }
+}
+
+// ============= REST COUNTRIES API =============
+async function fetchCountryDetails(code){
+  if(!code) return null;
+  if(apiCache[code]) return apiCache[code];
+  try{
+    const r = await fetch(`${URL_RC}${code}?fields=${RC_FIELDS}`);
+    if(!r.ok) return null;
+    const data = await r.json();
+    apiCache[code] = data;
+    return data;
+  }catch(e){
+    console.error('REST Countries fetch error:', e);
+    return null;
+  }
+}
+
+function formatNum(n){
+  return typeof n === 'number' ? n.toLocaleString('it-IT') : n;
+}
+
+function renderExploreDetails(data, props){
+  const info = $('explore-info');
+  const itName = data.translations?.ita?.common || props.itName || data.name?.common || '';
+  const officialNative = data.name?.official || '';
+  const capital = data.capital ? data.capital.join(', ') : props.cap;
+  const pop = data.population ? formatNum(data.population) : props.pop;
+  const area = data.area ? formatNum(data.area) + ' km²' : props.area;
+  const flagUrl = data.flags?.svg || `https://flagcdn.com/h80/${props.code}.png`;
+  const coatUrl = data.coatOfArms?.svg || '';
+  const continent = data.continents ? data.continents.join(', ') : '';
+  const subregion = data.subregion || '';
+  const tz = data.timezones ? data.timezones.join(', ') : '';
+  const langs = data.languages ? Object.values(data.languages).join(', ') : '';
+  const currencies = data.currencies ? Object.values(data.currencies).map(c=>`${c.name} (${c.symbol||''})`.trim()).join(', ') : '';
+  const phone = data.idd ? (data.idd.root||'') + (data.idd.suffixes ? data.idd.suffixes[0] : '') : '';
+  const tld = data.tld ? data.tld.join(', ') : '';
+  const carSide = data.car?.side === 'right' ? 'Destra' : data.car?.side === 'left' ? 'Sinistra' : '';
+  const unMember = data.unMember === true ? '✅' : data.unMember === false ? '❌' : '';
+  const indep = data.independent === true ? '✅' : data.independent === false ? '❌' : '';
+  const landlocked = data.landlocked === true ? '✅ Senza sbocco' : data.landlocked === false ? '❌ Ha coste' : '';
+  const gini = data.gini ? Object.entries(data.gini).map(([y,v])=>`${v} (${y})`).join(', ') : '';
+  const fifa = data.fifa || '';
+  const gmaps = data.maps?.googleMaps || '';
+  const osmaps = data.maps?.openStreetMaps || '';
+
+  // Borders: convert cca3 codes to names
+  let bordersHtml = '';
+  if(data.borders && data.borders.length > 0){
+    bordersHtml = data.borders.map(b=>{
+      // Try to find in local dicts
+      for(const dict of [dictAmericas,dictEurope,dictAsia,dictAfrica]){
+        for(const [en,v] of Object.entries(dict)){
+          if(v.code && v.code.toLowerCase() === b.toLowerCase().substring(0,2)) return v.name;
+        }
+      }
+      return b;
+    }).join(', ');
+  } else {
+    bordersHtml = 'Nessuno (isola o senza confini terrestri)';
+  }
+
+  $('exp-flag').src = flagUrl;
+  $('exp-coat').src = coatUrl;
+  $('exp-coat').style.display = coatUrl ? 'block' : 'none';
+  $('exp-name').innerText = itName;
+  $('exp-official').innerText = officialNative;
+  $('exp-cap').innerHTML = `Capitale: <b>${capital}</b>`;
+  $('exp-pop').innerText = pop;
+  $('exp-area').innerText = area;
+  $('exp-continent').innerText = continent;
+  $('exp-subregion').innerText = subregion;
+  $('exp-tz').innerText = tz;
+  $('exp-langs').innerText = langs;
+  $('exp-currencies').innerText = currencies;
+  $('exp-phone').innerText = phone;
+  $('exp-tld').innerText = tld;
+  $('exp-car').innerText = carSide;
+  $('exp-un').innerText = unMember;
+  $('exp-indep').innerText = indep;
+  $('exp-landlocked').innerText = landlocked;
+  $('exp-gini').innerText = gini || '—';
+  $('exp-fifa').innerText = fifa || '—';
+  $('exp-borders').innerText = bordersHtml;
+
+  // Links
+  $('exp-gmaps').href = gmaps;
+  $('exp-gmaps').style.display = gmaps ? 'inline-flex' : 'none';
+  $('exp-osmaps').href = osmaps;
+  $('exp-osmaps').style.display = osmaps ? 'inline-flex' : 'none';
 }
 
 function renderMap(){
@@ -82,11 +193,12 @@ function renderMap(){
   const fitFeatures = geoData.features.filter(f => d3.geoArea(f) > 0.002);
   const proj=d3.geoMercator();
   
-  if (currentZone === 'america') {
+  if (currentZone === 'americas') {
     proj.rotate([100, 0]);
   } else if (currentZone === 'asia') {
     proj.rotate([-100, 0]);
   }
+  // world + europe + africa: no rotation (natural Mercator)
   
   proj.fitExtent([[0,0],[w,h]], {type: "FeatureCollection", features: fitFeatures.length > 0 ? fitFeatures : geoData.features});
   proj.clipExtent([[0,0],[w,h]]);
@@ -213,11 +325,23 @@ function handleMapClick(event,d){
     el.classed('active-explore',true);
     $('explore-prompt').classList.add('hidden');
     $('explore-info').classList.remove('hidden');
-    $('exp-name').innerText=d.properties.itName;
-    $('exp-flag').src=`https://flagcdn.com/h80/${d.properties.code}.png`;
-    $('exp-cap').innerHTML=`Capitale: <b>${d.properties.cap}</b>`;
-    $('exp-pop').innerText=d.properties.pop;
-    $('exp-area').innerText=d.properties.area;
+    // Show basic data immediately
+    $('exp-name').innerText = d.properties.itName || d.properties.name;
+    $('exp-official').innerText = '';
+    $('exp-flag').src = d.properties.code ? `https://flagcdn.com/h80/${d.properties.code}.png` : '';
+    $('exp-coat').style.display = 'none';
+    $('exp-cap').innerHTML = `Capitale: <b>${d.properties.cap||'...'}</b>`;
+    $('exp-pop').innerText = d.properties.pop || '...';
+    $('exp-area').innerText = d.properties.area || '...';
+    // Show spinner, fetch API details
+    $('exp-loader').classList.remove('hidden');
+    $('exp-details').classList.add('hidden');
+    const code = d.properties.code || '';
+    fetchCountryDetails(code).then(data=>{
+      $('exp-loader').classList.add('hidden');
+      $('exp-details').classList.remove('hidden');
+      if(data) renderExploreDetails(data, d.properties);
+    });
     return;
   }
 
