@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cartina Muta - Esercizi di Geografia</title>
+    <!-- Tailwind CSS per il design moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js per disegnare le mappe in SVG -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- TopoJSON per interpretare i dati geografici -->
+    <script src="https://unpkg.com/topojson-client@3"></script>
+    <!-- Canvas Confetti per l'animazione della vittoria -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Baloo 2', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Stili per la Mappa SVG */
+        .map-container {
+            cursor: grab;
+            touch-action: none;
+            background-color: #e0f2fe;
+        }
+
+        .map-container:active {
+            cursor: grabbing;
+        }
+
+        .map-path {
+            fill: #f8fafc;
+            stroke: #64748b;
+            stroke-width: 0.5px;
+            stroke-linejoin: round;
+            transition: fill 0.2s ease, stroke-width 0.2s ease;
+            cursor: pointer;
+        }
+
+        /* Modalità scrittura/esplorazione: Stato attualmente selezionato */
+        .map-path.active-typing,
+        .map-path.active-explore {
+            fill: #d8b4fe !important;
+            /* purple-300 */
+            stroke: #7e22ce;
+            stroke-width: 1px;
+        }
+
+        .map-path.active-explore {
+            fill: #93c5fd !important;
+            /* blue-300 per esplorazione */
+            stroke: #1d4ed8;
+        }
+
+        /* Durante il gioco (Stato in cui si è già inserita una risposta/cliccato) */
+        .map-path.selected {
+            fill: #cbd5e1 !important;
+            /* Grigio chiaro */
+            stroke: #94a3b8;
+        }
+
+        /* Fine gioco (Corretto / Sbagliato) */
+        .map-path.correct {
+            fill: #86efac !important;
+            /* Verde pastello */
+            stroke: #14532d;
+            stroke-width: 0.8px;
+            pointer-events: none;
+        }
+
+        .map-path.wrong {
+            fill: #fca5a5 !important;
+            /* Rosso pastello */
+            stroke: #991b1b;
+            stroke-width: 0.8px;
+            pointer-events: none;
+        }
+
+        /* Stili per i mari/oceani */
+        .water-circle {
+            fill: #bae6fd;
+            stroke: #38bdf8;
+            stroke-width: 2px;
+            transition: fill 0.2s ease, transform 0.2s ease;
+        }
+
+        .water-group.active-typing .water-circle,
+        .water-group.active-explore .water-circle {
+            fill: #d8b4fe !important;
+            stroke: #7e22ce;
+            transform: scale(1.2);
+        }
+
+        .water-group.active-explore .water-circle {
+            fill: #93c5fd !important;
+            stroke: #1d4ed8;
+        }
+
+        .water-group.selected .water-circle {
+            fill: #7dd3fc !important;
+        }
+
+        .water-group.correct .water-circle {
+            fill: #86efac !important;
+            stroke: #14532d;
+            pointer-events: none;
+        }
+
+        .water-group.wrong .water-circle {
+            fill: #fca5a5 !important;
+            stroke: #991b1b;
+            pointer-events: none;
+        }
+
+        /* Animazioni di aggiunta/sottrazione tempo */
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        .time-float {
+            position: absolute;
+            font-weight: 900;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 50;
+        }
+
+        /* Tooltip per i nomi degli stati */
+        #map-tooltip {
+            pointer-events: none;
+            transition: opacity 0.1s;
+        }
+
+        /* Scrollbar personalizzata per la sidebar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 h-[100dvh] flex flex-col-reverse md:flex-row overflow-hidden select-none bg-[#e0f2fe]">
+
+    <!-- Pannello Laterale -->
+    <div
+        class="w-full md:w-[350px] lg:w-[400px] bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.1)] md:shadow-2xl flex flex-col z-20 shrink-0 h-[45dvh] md:h-full transition-all rounded-t-3xl md:rounded-none relative">
+
+        <!-- Intestazione -->
+        <div
+            class="p-4 bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md z-10 shrink-0 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
+                    <span>🌎</span> GeoQuiz America
+                </h1>
+                <p class="text-blue-100 text-xs md:text-sm font-medium mt-1">Impara la geografia divertendoti</p>
+            </div>
+            <button id="btn-home" class="hidden p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                title="Torna al menu" onclick="resetApp()">
+                🏠
+            </button>
+        </div>
+
+        <!-- Area Contenuti Dinamici -->
+        <div class="p-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar relative">
+
+            <!-- Stato di Caricamento -->
+            <div id="loading-state" class="absolute inset-0 bg-white flex flex-col items-center justify-center z-10">
+                <svg class="animate-spin h-10 w-10 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="text-slate-500 font-semibold animate-pulse">Disegnando la mappa...</p>
+            </div>
+
+            <!-- SCHERMATA: Setup (Scelta Modalità) -->
+            <div id="setup-state" class="hidden flex-col h-full py-2">
+                <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Scegli una modalità:</h2>
+
+                <div class="space-y-2 pb-4">
+                    <!-- Classiche -->
+                    <button onclick="startQuiz('click')"
+                        class="w-full p-3 border-2 border-blue-200 border-b-[6px] bg-blue-50 hover:bg-blue-100 active:border-b-2 active:translate-y-[4px] rounded-2xl text-left transition-all flex items-center gap-3">
+                        <span class="text-2xl">👆</span>
+                        <div>
+                            <h3 class="font-black text-blue-900 text-sm">Tocca la Mappa</h3>
+                            <p class="text-[10px] text-blue-600">Trova lo stato indicato</p>
+                        </div>
+                    </button>
+
+                    <button onclick="startQuiz('type')"
+                        class="w-full p-3 border-2 border-purple-200 border-b-[6px] bg-purple-50 hover:bg-purple-100 active:border-b-2 active:translate-y-[4px] rounded-2xl text-left transition-all flex items-center gap-3">
+                        <span class="text-2xl">⌨️</span>
+                        <div>
+                            <h3 class="font-black text-purple-900 text-sm">Scrivi i Nomi</h3>
+                            <p class="text-[10px] text-purple-600">Mappa muta, scrivi tu i nomi</p>
+                        </div>
+                    </button>
+
+                    <!-- Nuove -->
+                    <button onclick="startQuiz('time')"
+                        class="w-full p-3 border-2 border-red-200 border-b-[6px] bg-red-50 hover:bg-red-100 active:border-b-2 active:translate-y-[4px] rounded-2xl text-left transition-all flex items-center gap-3">
+                        <span class="text-2xl">⏱️</span>
+                        <div>
+                            <h3 class="font-black text-red-900 text-sm">Time Attack</h3>
+                            <p class="text-[10px] text-red-600">60s. +2s esatto, -2s errore!</p>
+                        </div>
+                    </button>
+
+                    <button onclick="startQuiz('capital')"
+                        class="w-full p-3 border-2 border-amber-200 border-b-[6px] bg-amber-50 hover:bg-amber-100 active:border-b-2 active:translate-y-[4px] rounded-2xl text-left transition-all flex items-center gap-3">
+                        <span class="text-2xl">🏛️</span>
+                        <div>
+                            <h3 class="font-black text-amber-900 text-sm">Capitali</h3>
+                            <p class="text-[10px] text-amber-600">Trova lo stato dalla capitale</p>
+                        </div>
+                    </button>
+
+                    <button onclick="startQuiz('flag')"
+                        class="w-full p-3 border-2 border-emerald-200 border-b-[6px] bg-emerald-50 hover:bg-emerald-100 active:border-b-2 active:translate-y-[4px] rounded-2xl text-left transition-all flex items-center gap-3">
+                        <span class="text-2xl">🚩</span>
+                        <div>
+                            <h3 class="font-black text-emerald-900 text-sm">Bandiere</h3>
+                            <p class="text-[10px] text-emerald-600">Riconosci la bandiera</p>
+                        </div>
+                    </button>
+
+                    <button onclick="startQuiz('explore')"
+                        class="w-full p-3 border-2 border-slate-200 border-b-[6px] bg-slate-50 hover:bg-slate-100 active:border-b-2 active:translate-y-[4px] rounded-2xl text-left transition-all flex items-center gap-3 mt-4">
+                        <span class="text-2xl">🔍</span>
+                        <div>
+                            <h3 class="font-black text-slate-700 text-sm">Esplorazione Libera</h3>
+                            <p class="text-[10px] text-slate-500">Mappa interattiva con info</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCHERMATA: Quiz Attivo (Condiviso per Click, Time, Capital, Flag) -->
+            <div id="active-state" class="hidden flex-col h-full opacity-0 transition-opacity duration-500">
+
+                <!-- Interfaccia: Click-based -->
+                <div id="ui-click" class="hidden flex-col flex-1">
+                    <div class="flex justify-between items-center mb-2">
+                        <span id="click-prompt-label" class="text-[10px] font-bold text-slate-400 uppercase">Da
+                            trovare:</span>
+                        <div class="flex gap-2">
+                            <span id="time-display"
+                                class="hidden text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-md animate-pulse">⏱️
+                                60s</span>
+                            <span id="click-progress"
+                                class="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-md">1 / 36</span>
+                        </div>
+                    </div>
+
+                    <div id="target-box"
+                        class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl mb-4 text-center transform transition-transform flex flex-col items-center justify-center min-h-[120px]">
+                        <h2 id="target-name" class="text-2xl font-black text-blue-900 leading-tight">...</h2>
+                        <img id="target-flag" src="" alt="Bandiera"
+                            class="hidden w-24 h-auto shadow-sm rounded-sm border border-slate-200 object-cover">
+                    </div>
+
+                    <button id="btn-skip"
+                        class="w-full py-2 px-4 border-2 border-slate-200 border-b-[4px] bg-slate-50 hover:bg-slate-100 active:border-b-2 active:translate-y-[2px] text-slate-600 font-bold rounded-2xl transition-all mb-2 text-sm flex justify-center items-center gap-2">
+                        <span>⏭️</span> Salta (rimanda alla fine)
+                    </button>
+                </div>
+
+                <!-- Interfaccia: Modalità Scrivi -->
+                <div id="ui-type" class="hidden flex-col flex-1">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase">Risposte inserite:</span>
+                        <span id="type-progress"
+                            class="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded-md">0 / 36</span>
+                    </div>
+
+                    <div id="type-prompt"
+                        class="bg-purple-50 border-2 border-purple-200 p-4 rounded-2xl mb-4 text-center">
+                        <p class="text-sm font-bold text-purple-800">👆 Tocca uno stato o un oceano sulla mappa per
+                            scriverne il nome.</p>
+                    </div>
+
+                    <div id="type-input-section"
+                        class="hidden flex-col bg-purple-50 border-2 border-purple-200 p-4 rounded-2xl mb-4">
+                        <p class="text-[10px] font-bold text-purple-500 uppercase tracking-wider mb-2">Territorio
+                            evidenziato:</p>
+                        <form id="type-form" class="relative">
+                            <input type="text" id="type-input" placeholder="Scrivi il nome..." autocomplete="off"
+                                class="w-full p-3 pr-14 border-2 border-slate-300 rounded-2xl bg-white text-slate-700 font-bold text-base focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
+                            <button type="submit"
+                                class="absolute right-1.5 top-1.5 bottom-1.5 bg-purple-600 text-white px-3 rounded-lg font-bold hover:bg-purple-700 transition-colors">
+                                OK
+                            </button>
+                        </form>
+                        <div class="flex justify-between items-center mt-3">
+                            <button type="button" id="btn-clear-type"
+                                class="text-xs text-slate-500 hover:text-red-500 font-bold">
+                                Annulla selezione
+                            </button>
+                            <button type="button" id="btn-delete-answer"
+                                class="hidden text-xs text-red-500 hover:text-red-700 font-bold">
+                                Cancella risposta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interfaccia: Esplorazione -->
+                <div id="ui-explore" class="hidden flex-col flex-1">
+                    <div id="explore-prompt" class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl text-center">
+                        <span class="text-4xl mb-2 block">🔍</span>
+                        <p class="text-sm font-bold text-blue-800">Tocca un qualsiasi elemento sulla mappa per scoprirne
+                            i dettagli.</p>
+                    </div>
+
+                    <div id="explore-info"
+                        class="hidden flex-col bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
+                        <div class="flex items-center gap-4 mb-4 pb-4 border-b border-slate-100">
+                            <img id="exp-flag" src=""
+                                class="w-16 h-auto border border-slate-200 rounded shadow-sm hidden" alt="Bandiera">
+                            <div id="exp-water-icon" class="text-4xl hidden">🌊</div>
+                            <div>
+                                <h2 id="exp-name" class="text-xl font-black text-slate-800">Nome</h2>
+                                <p id="exp-cap" class="text-sm text-slate-500 font-semibold">Capitale: <span
+                                        class="text-slate-700">...</span></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="bg-slate-50 p-2 rounded-lg">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Popolazione</p>
+                                <p id="exp-pop" class="font-bold text-slate-700">...</p>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-lg">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Superficie</p>
+                                <p id="exp-area" class="font-bold text-slate-700">...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pulsante "Termina" (Nascondi in Esplorazione) -->
+                <div id="finish-container" class="mt-auto pt-4 border-t border-slate-100">
+                    <button id="btn-finish"
+                        class="w-full py-3 px-4 border-2 border-emerald-600 border-b-[6px] bg-emerald-500 hover:bg-emerald-400 active:border-b-2 active:translate-y-[4px] text-white font-black rounded-2xl transition-all text-lg flex justify-center items-center gap-2">
+                        <span>✅</span> Termina e Verifica
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCHERMATA: Risultati -->
+            <div id="results-state" class="hidden flex-col h-full">
+                <h2 id="results-title" class="text-2xl font-black text-slate-800 mb-4 text-center">Risultati Quiz</h2>
+
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between items-center bg-green-50 border border-green-200 p-3 rounded-xl">
+                        <span class="font-bold text-green-700">✅ Esatti:</span>
+                        <span id="res-correct" class="text-xl font-black text-green-600">0</span>
+                    </div>
+                    <div id="res-typos-container"
+                        class="flex justify-between items-center bg-yellow-50 border border-yellow-200 p-3 rounded-xl">
+                        <span class="font-bold text-yellow-700">⚠️ Indovinati (Typos):</span>
+                        <span id="res-typos" class="text-xl font-black text-yellow-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-red-50 border border-red-200 p-3 rounded-xl">
+                        <span class="font-bold text-red-700">❌ Sbagliati/Saltati:</span>
+                        <span id="res-wrong" class="text-xl font-black text-red-600">0</span>
+                    </div>
+                </div>
+
+                <div id="typo-details-container" class="hidden mb-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase mb-2">Note sugli errori:</p>
+                    <ul id="typo-list"
+                        class="text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 max-h-32 overflow-y-auto">
+                    </ul>
+                </div>
+
+                <div class="mt-auto space-y-2">
+                    <p class="text-xs text-center text-slate-500 font-semibold mb-2">Esplora la mappa per vedere le
+                        risposte corrette!</p>
+                    <button onclick="resetApp()"
+                        class="w-full py-3 px-4 bg-white border-2 border-slate-200 border-b-[6px] hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 active:border-b-2 active:translate-y-[4px] text-slate-600 font-bold rounded-2xl transition-all">
+                        🔄 Gioca di Nuovo
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Area della Mappa Interattiva -->
+    <div id="map-area" class="flex-1 relative overflow-hidden map-container shadow-inner">
+        <!-- SVG iniettato da D3.js -->
+
+        <div id="map-instruction"
+            class="absolute bottom-6 right-6 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200 text-sm font-bold text-slate-600 pointer-events-none hidden md:block z-10">
+            Puoi scorrere per spostarti e usare la rotellina per ingrandire
+        </div>
+
+        <div id="map-tooltip"
+            class="absolute hidden bg-slate-800/90 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg shadow-xl text-sm font-bold z-50 transform -translate-x-1/2 -translate-y-full mt-[-12px]">
+            <span id="tooltip-text">Nome</span>
+            <div
+                class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-slate-800/90">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const URL_WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+        // Variabili Globali
+        let geoData = null;
+        let svg = null;
+        let mapGroup = null;
+        let pathGenerator = null;
+        let zoomBehavior = null;
+
+        let gameState = 'setup'; // 'setup', 'active', 'results'
+        let gameMode = null;     // 'click', 'type', 'capital', 'flag', 'time', 'explore'
+        let totalStates = 0;
+
+        // Modalità Click-based (Click, Capital, Flag, Time)
+        let quizQueue = [];
+        let currentTarget = null;
+        let clickAnswers = []; // { targetId, clickedId }
+
+        // Modalità Scrittura
+        let activeTypeFeature = null;
+        let typedAnswers = {};
+
+        // Time Attack
+        let timerInterval = null;
+        let timeLeft = 0;
+
+        // Elementi DOM (cache)
+        const els = {
+            loading: document.getElementById('loading-state'),
+            setup: document.getElementById('setup-state'),
+            active: document.getElementById('active-state'),
+            results: document.getElementById('results-state'),
+            btnHome: document.getElementById('btn-home'),
+
+            uiClick: document.getElementById('ui-click'),
+            uiType: document.getElementById('ui-type'),
+            uiExplore: document.getElementById('ui-explore'),
+            finishContainer: document.getElementById('finish-container'),
+
+            clickPromptLabel: document.getElementById('click-prompt-label'),
+            timeDisplay: document.getElementById('time-display'),
+            clickProgress: document.getElementById('click-progress'),
+            targetBox: document.getElementById('target-box'),
+            targetName: document.getElementById('target-name'),
+            targetFlag: document.getElementById('target-flag'),
+
+            typeProgress: document.getElementById('type-progress'),
+            typePrompt: document.getElementById('type-prompt'),
+            typeInputSection: document.getElementById('type-input-section'),
+            typeForm: document.getElementById('type-form'),
+            typeInput: document.getElementById('type-input'),
+            btnClearType: document.getElementById('btn-clear-type'),
+            btnDeleteAnswer: document.getElementById('btn-delete-answer'),
+
+            expPrompt: document.getElementById('explore-prompt'),
+            expInfo: document.getElementById('explore-info'),
+            expFlag: document.getElementById('exp-flag'),
+            expWater: document.getElementById('exp-water-icon'),
+            expName: document.getElementById('exp-name'),
+            expCap: document.getElementById('exp-cap'),
+            expPop: document.getElementById('exp-pop'),
+            expArea: document.getElementById('exp-area'),
+
+            btnSkip: document.getElementById('btn-skip'),
+            btnFinish: document.getElementById('btn-finish'),
+
+            resultsTitle: document.getElementById('results-title'),
+            resCorrect: document.getElementById('res-correct'),
+            resTyposContainer: document.getElementById('res-typos-container'),
+            resTypos: document.getElementById('res-typos'),
+            resWrong: document.getElementById('res-wrong'),
+            typoContainer: document.getElementById('typo-details-container'),
+            typoList: document.getElementById('typo-list'),
+
+            mapArea: document.getElementById('map-area'),
+            tooltip: document.getElementById('map-tooltip'),
+            tooltipText: document.getElementById('tooltip-text')
+        };
+
+        // ==========================================
+        // DIZIONARIO ESTESO (Nomi, Capitali, Codici Bandiera ISO, Info)
+        // ==========================================
+        const dictAmericas = {
+            "Argentina": { name: "Argentina", cap: "Buenos Aires", code: "ar", pop: "46 M", area: "2.78M km²" },
+            "Bolivia": { name: "Bolivia", cap: "Sucre", code: "bo", pop: "12 M", area: "1.09M km²" },
+            "Brazil": { name: "Brasile", cap: "Brasilia", code: "br", pop: "214 M", area: "8.51M km²" },
+            "Chile": { name: "Cile", cap: "Santiago", code: "cl", pop: "19 M", area: "756k km²" },
+            "Colombia": { name: "Colombia", cap: "Bogotà", code: "co", pop: "51 M", area: "1.14M km²" },
+            "Ecuador": { name: "Ecuador", cap: "Quito", code: "ec", pop: "18 M", area: "283k km²" },
+            "Guyana": { name: "Guyana", cap: "Georgetown", code: "gy", pop: "800k", area: "214k km²" },
+            "Paraguay": { name: "Paraguay", cap: "Asunción", code: "py", pop: "6.7 M", area: "406k km²" },
+            "Peru": { name: "Perù", cap: "Lima", code: "pe", pop: "34 M", area: "1.28M km²" },
+            "Suriname": { name: "Suriname", cap: "Paramaribo", code: "sr", pop: "600k", area: "163k km²" },
+            "Uruguay": { name: "Uruguay", cap: "Montevideo", code: "uy", pop: "3.4 M", area: "176k km²" },
+            "Venezuela": { name: "Venezuela", cap: "Caracas", code: "ve", pop: "28 M", area: "916k km²" },
+            "Canada": { name: "Canada", cap: "Ottawa", code: "ca", pop: "38 M", area: "9.98M km²" },
+            "United States of America": { name: "Stati Uniti d'America", cap: "Washington D.C.", code: "us", pop: "331 M", area: "9.83M km²" },
+            "Mexico": { name: "Messico", cap: "Città del Messico", code: "mx", pop: "126 M", area: "1.96M km²" },
+            "Belize": { name: "Belize", cap: "Belmopan", code: "bz", pop: "400k", area: "22k km²" },
+            "Costa Rica": { name: "Costa Rica", cap: "San José", code: "cr", pop: "5.1 M", area: "51k km²" },
+            "El Salvador": { name: "El Salvador", cap: "San Salvador", code: "sv", pop: "6.3 M", area: "21k km²" },
+            "Guatemala": { name: "Guatemala", cap: "Città del Guatemala", code: "gt", pop: "17 M", area: "108k km²" },
+            "Honduras": { name: "Honduras", cap: "Tegucigalpa", code: "hn", pop: "10 M", area: "112k km²" },
+            "Nicaragua": { name: "Nicaragua", cap: "Managua", code: "ni", pop: "6.8 M", area: "130k km²" },
+            "Panama": { name: "Panama", cap: "Panama", code: "pa", pop: "4.3 M", area: "75k km²" },
+            "Bahamas": { name: "Bahamas", cap: "Nassau", code: "bs", pop: "400k", area: "13k km²" },
+            "Cuba": { name: "Cuba", cap: "L'Avana", code: "cu", pop: "11 M", area: "109k km²" },
+            "Dominican Rep.": { name: "Repubblica Dominicana", cap: "Santo Domingo", code: "do", pop: "10 M", area: "48k km²" },
+            "Haiti": { name: "Haiti", cap: "Port-au-Prince", code: "ht", pop: "11 M", area: "27k km²" },
+            "Jamaica": { name: "Giamaica", cap: "Kingston", code: "jm", pop: "2.9 M", area: "10k km²" },
+            "Puerto Rico": { name: "Porto Rico", cap: "San Juan", code: "pr", pop: "3.2 M", area: "9k km²" },
+            "Trinidad and Tobago": { name: "Trinidad e Tobago", cap: "Port of Spain", code: "tt", pop: "1.3 M", area: "5k km²" },
+            "Greenland": { name: "Groenlandia", cap: "Nuuk", code: "gl", pop: "56k", area: "2.16M km²" },
+            "Falkland Is.": { name: "Isole Falkland", cap: "Stanley", code: "fk", pop: "3k", area: "12k km²" }
+        };
+
+        const waterBodies = [
+            { id: "w_pacific", properties: { name: "Pacific Ocean", itName: "Oceano Pacifico", type: "water", pop: "-", area: "165M km²" }, geometry: { type: "Point", coordinates: [-105, 0] } },
+            { id: "w_atlantic", properties: { name: "Atlantic Ocean", itName: "Oceano Atlantico", type: "water", pop: "-", area: "106M km²" }, geometry: { type: "Point", coordinates: [-45, 25] } },
+            { id: "w_caribbean", properties: { name: "Caribbean Sea", itName: "Mar dei Caraibi", type: "water", pop: "-", area: "2.7M km²" }, geometry: { type: "Point", coordinates: [-75, 15] } },
+            { id: "w_mexico", properties: { name: "Gulf of Mexico", itName: "Golfo del Messico", type: "water", pop: "-", area: "1.6M km²" }, geometry: { type: "Point", coordinates: [-90, 25] } },
+            { id: "w_arctic", properties: { name: "Arctic Ocean", itName: "Oceano Artico", type: "water", pop: "-", area: "14M km²" }, geometry: { type: "Point", coordinates: [-100, 80] } }
+        ];
+
+        // ==========================================
+        // INIT & CARICAMENTO
+        // ==========================================
+        async function initApp() {
+            setupEventListeners();
+            await loadAndRenderMap();
+        }
+
+        function setupEventListeners() {
+            els.btnSkip.addEventListener('click', handleSkipClick);
+            els.btnFinish.addEventListener('click', validateGame);
+
+            els.typeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleAddTypedAnswer();
+            });
+            els.btnClearType.addEventListener('click', clearActiveTypeSelection);
+            els.btnDeleteAnswer.addEventListener('click', deleteCurrentAnswer);
+
+            window.addEventListener('resize', debounce(() => {
+                if (geoData) renderSVGMap(geoData);
+            }, 200));
+        }
+
+        async function loadAndRenderMap() {
+            try {
+                const response = await fetch(URL_WORLD);
+                const topology = await response.json();
+                const allCountries = topojson.feature(topology, topology.objects.countries).features;
+
+                let features = allCountries.filter(f => dictAmericas.hasOwnProperty(f.properties.name));
+
+                features.forEach(f => {
+                    const data = dictAmericas[f.properties.name];
+                    f.properties.itName = data.name;
+                    f.properties.cap = data.cap;
+                    f.properties.code = data.code;
+                    f.properties.pop = data.pop;
+                    f.properties.area = data.area;
+                    f.properties.type = 'land';
+                });
+
+                features = features.concat(waterBodies);
+                geoData = { type: "FeatureCollection", features: features };
+
+                renderSVGMap(geoData);
+                window.resetApp(); // Esporta resetApp
+
+            } catch (error) {
+                console.error("Errore:", error);
+                alert("Errore nel caricamento dei dati geografici.");
+            }
+        }
+
+        // ==========================================
+        // D3 MAP RENDER
+        // ==========================================
+        function renderSVGMap(featureCollection) {
+            const container = els.mapArea;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const oldSvg = container.querySelector('svg');
+            if (oldSvg) oldSvg.remove();
+
+            svg = d3.select(container).insert('svg', ':first-child')
+                .attr('width', '100%').attr('height', '100%')
+                .attr('viewBox', `0 0 ${width} ${height}`)
+                .attr('preserveAspectRatio', 'xMidYMid meet');
+
+            mapGroup = svg.append('g').attr('id', 'map-group');
+
+            const landFeatures = featureCollection.features.filter(f => f.properties.type !== 'water');
+            const projection = d3.geoMercator().fitExtent([[width * 0.05, height * 0.05], [width * 0.95, height * 0.95]], { type: "FeatureCollection", features: landFeatures });
+            pathGenerator = d3.geoPath().projection(projection);
+
+            mapGroup.selectAll('path')
+                .data(landFeatures)
+                .enter().append('path')
+                .attr('d', pathGenerator)
+                .attr('class', 'map-path')
+                .on('click', handleMapClick)
+                .on('mouseenter', showTooltip)
+                .on('mousemove', moveTooltip)
+                .on('mouseleave', hideTooltip);
+
+            const waterFeats = featureCollection.features.filter(f => f.properties.type === 'water');
+            mapGroup.selectAll('g.water-group')
+                .data(waterFeats)
+                .enter().append('g')
+                .attr('class', 'water-group cursor-pointer')
+                .attr('transform', d => {
+                    const coords = projection(d.geometry.coordinates);
+                    return `translate(${coords[0]}, ${coords[1]})`;
+                })
+                .on('click', handleMapClick)
+                .on('mouseenter', showTooltip)
+                .on('mousemove', moveTooltip)
+                .on('mouseleave', hideTooltip)
+                .each(function () {
+                    d3.select(this).append('circle').attr('r', 8).attr('class', 'water-circle');
+                    d3.select(this).append('text').text('🌊').attr('text-anchor', 'middle').attr('dominant-baseline', 'central').style('font-size', '10px').style('pointer-events', 'none');
+                });
+
+            zoomBehavior = d3.zoom()
+                .scaleExtent([1, 8])
+                .translateExtent([[0, 0], [width, height]])
+                .on('zoom', (e) => mapGroup.attr('transform', e.transform));
+            svg.call(zoomBehavior);
+        }
+
+        // ==========================================
+        // FLUSSO GIOCO & MODALITA'
+        // ==========================================
+        window.resetApp = function () {
+            gameState = 'setup';
+            gameMode = null;
+            clearTimer();
+
+            els.loading.classList.add('hidden');
+            els.active.classList.add('hidden');
+            els.results.classList.add('hidden');
+            els.btnHome.classList.add('hidden');
+            els.setup.classList.remove('hidden');
+            els.setup.classList.add('flex');
+
+            // Ripristina mappa
+            if (mapGroup) {
+                mapGroup.selectAll('.map-path').attr('class', 'map-path');
+                mapGroup.selectAll('.water-group').attr('class', 'water-group cursor-pointer');
+                svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity); // Reset zoom
+            }
+            hideTooltip();
+        };
+
+        window.startQuiz = function (mode) {
+            gameMode = mode;
+            gameState = 'active';
+
+            els.setup.classList.add('hidden');
+            els.setup.classList.remove('flex');
+            els.active.classList.remove('hidden');
+            els.active.classList.add('flex');
+            els.btnHome.classList.remove('hidden');
+
+            setTimeout(() => { els.active.style.opacity = '1'; }, 50);
+
+            // Resetta UI
+            els.uiClick.classList.add('hidden'); els.uiClick.classList.remove('flex');
+            els.uiType.classList.add('hidden'); els.uiType.classList.remove('flex');
+            els.uiExplore.classList.add('hidden'); els.uiExplore.classList.remove('flex');
+            els.finishContainer.classList.remove('hidden');
+            els.timeDisplay.classList.add('hidden');
+
+            if (mode === 'explore') {
+                gameState = 'explore';
+                els.uiExplore.classList.remove('hidden');
+                els.uiExplore.classList.add('flex');
+                els.finishContainer.classList.add('hidden');
+                els.expPrompt.classList.remove('hidden');
+                els.expInfo.classList.add('hidden');
+                return;
+            }
+
+            if (mode === 'type') {
+                els.uiType.classList.remove('hidden');
+                els.uiType.classList.add('flex');
+                totalStates = geoData.features.length;
+                activeTypeFeature = null;
+                typedAnswers = {};
+                clearActiveTypeSelection();
+                updateTypeProgressUI();
+                return;
+            }
+
+            // --- Modalità Click, Time, Capital, Flag ---
+            els.uiClick.classList.remove('hidden');
+            els.uiClick.classList.add('flex');
+
+            // Filtra gli oceani per Capitali e Bandiere
+            if (mode === 'capital' || mode === 'flag') {
+                quizQueue = geoData.features.filter(f => f.properties.type === 'land');
+            } else {
+                quizQueue = [...geoData.features];
+            }
+            totalStates = quizQueue.length;
+            shuffleArray(quizQueue);
+            clickAnswers = [];
+
+            // Configura UI specifica
+            if (mode === 'click') els.clickPromptLabel.innerText = "Trova lo stato:";
+            if (mode === 'time') {
+                els.clickPromptLabel.innerText = "Trova in fretta:";
+                els.timeDisplay.classList.remove('hidden');
+                startTimer(60);
+            }
+            if (mode === 'capital') els.clickPromptLabel.innerText = "Dov'è la capitale:";
+            if (mode === 'flag') els.clickPromptLabel.innerText = "Di chi è la bandiera:";
+
+            nextClickTarget();
+        };
+
+        // --- Logica Click-based ---
+        function nextClickTarget() {
+            if (quizQueue.length === 0) {
+                validateGame();
+                return;
+            }
+            currentTarget = quizQueue.shift();
+            els.clickProgress.innerText = `${totalStates - quizQueue.length} / ${totalStates}`;
+
+            els.targetBox.style.transform = 'scale(0.9)';
+            els.targetBox.style.opacity = '0.5';
+
+            setTimeout(() => {
+                els.targetName.classList.add('hidden');
+                els.targetFlag.classList.add('hidden');
+
+                if (gameMode === 'click' || gameMode === 'time') {
+                    els.targetName.innerText = currentTarget.properties.itName;
+                    els.targetName.classList.remove('hidden');
+                } else if (gameMode === 'capital') {
+                    els.targetName.innerText = currentTarget.properties.cap;
+                    els.targetName.classList.remove('hidden');
+                } else if (gameMode === 'flag') {
+                    els.targetFlag.src = `https://flagcdn.com/h80/${currentTarget.properties.code}.png`;
+                    els.targetFlag.classList.remove('hidden');
+                }
+
+                els.targetBox.style.transform = 'scale(1)';
+                els.targetBox.style.opacity = '1';
+            }, 150);
+        }
+
+        function handleSkipClick() {
+            if (currentTarget) {
+                quizQueue.push(currentTarget);
+                nextClickTarget();
+            }
+        }
+
+        function showTimeFloat(amount, x, y) {
+            const floatEl = document.createElement('div');
+            floatEl.className = 'time-float text-' + (amount > 0 ? 'green-500' : 'red-500');
+            floatEl.innerText = (amount > 0 ? '+' : '') + amount + 's';
+            floatEl.style.left = x + 'px';
+            floatEl.style.top = y + 'px';
+            document.body.appendChild(floatEl);
+            setTimeout(() => floatEl.remove(), 1000);
+        }
+
+        // --- Timer Logic ---
+        function startTimer(seconds) {
+            timeLeft = seconds;
+            updateTimerUI();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+                if (timeLeft <= 0) {
+                    clearTimer();
+                    validateGame("Tempo Scaduto!");
+                }
+            }, 1000);
+        }
+        function clearTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+        function updateTimerUI() {
+            els.timeDisplay.innerText = `⏱️ ${timeLeft}s`;
+            if (timeLeft <= 10) els.timeDisplay.classList.replace('text-red-600', 'text-red-800');
+        }
+
+        // --- Click Handler Generale ---
+        function handleMapClick(event, d) {
+            if (gameState === 'explore') {
+                handleExploreClick(d);
+                return;
+            }
+            if (gameState !== 'active') return;
+
+            const el = d3.select(this);
+
+            if (gameMode === 'type') {
+                activeTypeFeature = d;
+                mapGroup.selectAll('.map-path').classed('active-typing', false);
+                mapGroup.selectAll('.water-group').classed('active-typing', false);
+                el.classed('active-typing', true);
+
+                els.typePrompt.classList.add('hidden');
+                els.typeInputSection.classList.remove('hidden');
+                els.typeInputSection.classList.add('flex');
+
+                if (typedAnswers[d.id]) {
+                    els.typeInput.value = typedAnswers[d.id];
+                    els.btnDeleteAnswer.classList.remove('hidden');
+                } else {
+                    els.typeInput.value = '';
+                    els.btnDeleteAnswer.classList.add('hidden');
+                }
+                els.typeInput.focus();
+            }
+            else {
+                // Click, Time, Capital, Flag
+                if (el.classed('selected')) return;
+
+                if (gameMode === 'time') {
+                    // Feedback immediato per Time Attack
+                    if (d.id === currentTarget.id) {
+                        el.classed('correct', true);
+                        timeLeft += 2;
+                        showTimeFloat(2, event.clientX, event.clientY);
+                        clickAnswers.push({ targetId: currentTarget.id, clickedId: d.id, isCorrect: true });
+                        nextClickTarget();
+                    } else {
+                        // Sbagliato
+                        el.classed('wrong', true);
+                        setTimeout(() => el.classed('wrong', false), 400); // flash rosso
+                        timeLeft = Math.max(0, timeLeft - 2);
+                        showTimeFloat(-2, event.clientX, event.clientY);
+                        updateTimerUI();
+                    }
+                } else {
+                    el.classed('selected', true);
+                    clickAnswers.push({ targetId: currentTarget.id, clickedId: d.id, isCorrect: (d.id === currentTarget.id) });
+                    nextClickTarget();
+                }
+            }
+        }
+
+        // --- Logica Explore Mode ---
+        function handleExploreClick(d) {
+            mapGroup.selectAll('.map-path').classed('active-explore', false);
+            mapGroup.selectAll('.water-group').classed('active-explore', false);
+            d3.select(event.currentTarget).classed('active-explore', true);
+
+            els.expPrompt.classList.add('hidden');
+            els.expInfo.classList.remove('hidden');
+            els.expInfo.classList.add('flex');
+
+            els.expName.innerText = d.properties.itName;
+
+            if (d.properties.type === 'land') {
+                els.expWater.classList.add('hidden');
+                els.expFlag.src = `https://flagcdn.com/h80/${d.properties.code}.png`;
+                els.expFlag.classList.remove('hidden');
+                els.expCap.innerHTML = `Capitale: <span class="text-slate-800 font-bold">${d.properties.cap}</span>`;
+            } else {
+                els.expFlag.classList.add('hidden');
+                els.expWater.classList.remove('hidden');
+                els.expCap.innerHTML = `Tipo: <span class="text-blue-600 font-bold">Massa d'acqua</span>`;
+            }
+
+            els.expPop.innerText = d.properties.pop;
+            els.expArea.innerText = d.properties.area;
+        }
+
+        // --- Logica Type Mode ---
+        function handleAddTypedAnswer() {
+            if (!activeTypeFeature) return;
+            const val = els.typeInput.value.trim();
+            if (val.length > 0) {
+                typedAnswers[activeTypeFeature.id] = val;
+                markFeatureSelected(activeTypeFeature.id, true);
+            } else {
+                deleteCurrentAnswer();
+                return;
+            }
+            clearActiveTypeSelection();
+            updateTypeProgressUI();
+        }
+
+        function deleteCurrentAnswer() {
+            if (!activeTypeFeature) return;
+            delete typedAnswers[activeTypeFeature.id];
+            markFeatureSelected(activeTypeFeature.id, false);
+            clearActiveTypeSelection();
+            updateTypeProgressUI();
+        }
+
+        function clearActiveTypeSelection() {
+            activeTypeFeature = null;
+            mapGroup.selectAll('.map-path').classed('active-typing', false);
+            mapGroup.selectAll('.water-group').classed('active-typing', false);
+            els.typeInputSection.classList.add('hidden');
+            els.typeInputSection.classList.remove('flex');
+            els.typePrompt.classList.remove('hidden');
+        }
+
+        function markFeatureSelected(id, isSelected) {
+            mapGroup.selectAll('.map-path').filter(d => d.id === id).classed('selected', isSelected);
+            mapGroup.selectAll('.water-group').filter(d => d.id === id).classed('selected', isSelected);
+        }
+
+        function updateTypeProgressUI() {
+            els.typeProgress.innerText = `${Object.keys(typedAnswers).length} / ${totalStates}`;
+        }
+
+        // ==========================================
+        // VALIDAZIONE & RISULTATI
+        // ==========================================
+        function validateGame(customTitle = null) {
+            gameState = 'results';
+            clearTimer();
+            els.active.style.opacity = '0';
+
+            setTimeout(() => {
+                els.active.classList.add('hidden');
+                els.active.classList.remove('flex');
+                els.results.classList.remove('hidden');
+                els.results.classList.add('flex');
+
+                els.resultsTitle.innerText = customTitle ? customTitle : "Risultati Quiz";
+
+                let correctCount = 0, typoCount = 0, wrongCount = 0;
+                let correctIds = [], wrongIds = [];
+                let typoDetails = [];
+
+                if (gameMode !== 'type') {
+                    // Modalità Click, Time, Capital, Flag
+                    const listToVerify = (gameMode === 'capital' || gameMode === 'flag') ?
+                        geoData.features.filter(f => f.properties.type === 'land') : geoData.features;
+
+                    listToVerify.forEach(f => {
+                        const answer = clickAnswers.find(a => a.targetId === f.id);
+                        if (answer && answer.clickedId === f.id) {
+                            correctCount++;
+                            correctIds.push(f.id);
+                        } else {
+                            wrongCount++;
+                            wrongIds.push(f.id);
+                        }
+                    });
+                    els.resTyposContainer.classList.add('hidden'); // No typos nei click
+
+                } else {
+                    // Modalità Type
+                    els.resTyposContainer.classList.remove('hidden');
+                    els.resTyposContainer.classList.add('flex');
+
+                    geoData.features.forEach(f => {
+                        let expected = f.properties.itName;
+                        let typed = typedAnswers[f.id];
+                        let result = checkAnswerFuzzy(expected, typed);
+
+                        if (result === 'exact') {
+                            correctCount++;
+                            correctIds.push(f.id);
+                        } else if (result === 'typo') {
+                            typoCount++;
+                            correctIds.push(f.id);
+                            typoDetails.push({ expected: expected, typed: typed, isError: false });
+                        } else {
+                            wrongCount++;
+                            wrongIds.push(f.id);
+                            if (typed) {
+                                typoDetails.push({ expected: expected, typed: typed, isError: true });
+                            }
+                        }
+                    });
+                }
+
+                // UI Aggiornamento Risultati
+                els.resCorrect.innerText = correctCount;
+                els.resTypos.innerText = typoCount;
+                els.resWrong.innerText = wrongCount;
+
+                if (typoDetails.length > 0) {
+                    els.typoContainer.classList.remove('hidden');
+                    els.typoList.innerHTML = typoDetails.map(t => {
+                        if (t.isError) return `<li class="text-slate-600">Hai scritto <span class="font-bold line-through text-red-500">${t.typed}</span> per <span class="font-bold">${t.expected}</span></li>`;
+                        return `<li class="text-slate-600">Hai scritto <span class="font-bold text-orange-500">${t.typed}</span> per <span class="font-bold text-green-600">${t.expected}</span></li>`;
+                    }).join('');
+                } else {
+                    els.typoContainer.classList.add('hidden');
+                }
+
+                // Colora la Mappa
+                mapGroup.selectAll('.map-path')
+                    .classed('selected', false).classed('active-typing', false)
+                    .attr('class', d => `map-path ${correctIds.includes(d.id) ? 'correct' : 'wrong'}`);
+
+                mapGroup.selectAll('.water-group')
+                    .classed('selected', false).classed('active-typing', false)
+                    .attr('class', d => `water-group cursor-pointer ${correctIds.includes(d.id) ? 'correct' : 'wrong'}`);
+
+                if (wrongCount === 0 && correctCount > 0) fireConfetti();
+
+            }, 500);
+        }
+
+        // --- Utilities Stringhe & Distanza ---
+        function normalizeStr(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        function checkAnswerFuzzy(expected, typed) {
+            if (!typed) return 'wrong';
+            const eNorm = normalizeStr(expected);
+            const tNorm = normalizeStr(typed);
+            if (eNorm === tNorm) return 'exact';
+            const maxAllowed = eNorm.length <= 3 ? 0 : (eNorm.length <= 6 ? 1 : (eNorm.length <= 10 ? 2 : 3));
+            if (maxAllowed > 0 && getEditDistance(eNorm, tNorm) <= maxAllowed) return 'typo';
+            return 'wrong';
+        }
+
+        function getEditDistance(a, b) {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+                    else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        // --- Tooltip & Effetti ---
+        // Check if device is touch
+        const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches;
+
+        function showTooltip(event, d) {
+            if (isTouchDevice()) return; // Disabilita tooltip su mobile
+            if (gameState === 'results' || gameState === 'explore') {
+                els.tooltipText.innerText = d.properties.itName;
+                els.tooltip.style.display = 'block';
+            }
+        }
+        function moveTooltip(event) {
+            if (els.tooltip.style.display === 'block') {
+                const rect = els.mapArea.getBoundingClientRect();
+                els.tooltip.style.left = (event.clientX - rect.left) + 'px';
+                els.tooltip.style.top = (event.clientY - rect.top) + 'px';
+            }
+        }
+        function hideTooltip() { els.tooltip.style.display = 'none'; }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        function fireConfetti() {
+            var duration = 3000, end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#4ade80', '#3b82f6', '#fbbf24'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#4ade80', '#3b82f6', '#fbbf24'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+
+</html>
