@@ -26,12 +26,18 @@
     <div class="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
       <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-left">Scegli una zona</p>
       <div class="zone-grid w-full">
-        <div class="zone-card active" onclick="selectZone('americas')">
+        <div class="zone-card active" id="card-americas" onclick="selectZone('americas')">
           <span class="emoji">🌎</span><span class="name">America</span><span class="count">31 stati</span>
         </div>
-        <div class="zone-card wip"><span class="emoji">🌍</span><span class="name">Europa</span><span class="count"></span></div>
-        <div class="zone-card wip"><span class="emoji">🌏</span><span class="name">Asia</span><span class="count"></span></div>
-        <div class="zone-card wip"><span class="emoji">🌍</span><span class="name">Africa</span><span class="count"></span></div>
+        <div class="zone-card" id="card-europe" onclick="selectZone('europe')">
+          <span class="emoji">🌍</span><span class="name">Europa</span><span class="count">39 stati</span>
+        </div>
+        <div class="zone-card" id="card-asia" onclick="selectZone('asia')">
+          <span class="emoji">🌏</span><span class="name">Asia</span><span class="count">48 stati</span>
+        </div>
+        <div class="zone-card" id="card-africa" onclick="selectZone('africa')">
+          <span class="emoji">🌍</span><span class="name">Africa</span><span class="count">52 stati</span>
+        </div>
       </div>
     </div>
   </div>
@@ -133,7 +139,8 @@
     <div class="flex flex-col gap-3 mb-6">
       <div class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-4 rounded-2xl"><span class="font-bold text-green-700">Esatti</span><span id="res-correct" class="text-2xl font-extrabold text-green-600">0</span></div>
       <div id="res-typos-row" class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-4 rounded-2xl"><span class="font-bold text-yellow-700">Typos</span><span id="res-typos" class="text-2xl font-extrabold text-yellow-600">0</span></div>
-      <div class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-4 rounded-2xl"><span class="font-bold text-red-700">Sbagliati</span><span id="res-wrong" class="text-2xl font-extrabold text-red-600">0</span></div>
+      <div id="res-wrong-row" class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-4 rounded-2xl"><span class="font-bold text-red-700">Sbagliati</span><span id="res-wrong" class="text-2xl font-extrabold text-red-600">0</span></div>
+      <div id="res-time-row" class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl"><span class="font-bold text-blue-700">Tempo Rimasto</span><span id="res-time" class="text-2xl font-extrabold text-blue-600">0s</span></div>
     </div>
     <div id="typo-details" class="hidden mb-4">
       <p class="text-xs font-bold text-slate-500 uppercase mb-2">Dettagli</p>
@@ -147,6 +154,7 @@
   </div>
 </div>
 
+<script src="./data.js"></script>
 <script src="./app.js"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(e=>console.log(e))})}</script>
 </body>

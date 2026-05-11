@@ -1,42 +1,10 @@
 // ============= DATA =============
 const URL_WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-const dictAmericas = {
-  "Argentina":{name:"Argentina",cap:"Buenos Aires",code:"ar",pop:"46 M",area:"2.78M km²"},
-  "Bolivia":{name:"Bolivia",cap:"Sucre",code:"bo",pop:"12 M",area:"1.09M km²"},
-  "Brazil":{name:"Brasile",cap:"Brasilia",code:"br",pop:"214 M",area:"8.51M km²"},
-  "Chile":{name:"Cile",cap:"Santiago",code:"cl",pop:"19 M",area:"756k km²"},
-  "Colombia":{name:"Colombia",cap:"Bogotà",code:"co",pop:"51 M",area:"1.14M km²"},
-  "Ecuador":{name:"Ecuador",cap:"Quito",code:"ec",pop:"18 M",area:"283k km²"},
-  "Guyana":{name:"Guyana",cap:"Georgetown",code:"gy",pop:"800k",area:"214k km²"},
-  "Paraguay":{name:"Paraguay",cap:"Asunción",code:"py",pop:"6.7 M",area:"406k km²"},
-  "Peru":{name:"Perù",cap:"Lima",code:"pe",pop:"34 M",area:"1.28M km²"},
-  "Suriname":{name:"Suriname",cap:"Paramaribo",code:"sr",pop:"600k",area:"163k km²"},
-  "Uruguay":{name:"Uruguay",cap:"Montevideo",code:"uy",pop:"3.4 M",area:"176k km²"},
-  "Venezuela":{name:"Venezuela",cap:"Caracas",code:"ve",pop:"28 M",area:"916k km²"},
-  "Canada":{name:"Canada",cap:"Ottawa",code:"ca",pop:"38 M",area:"9.98M km²"},
-  "United States of America":{name:"Stati Uniti d'America",cap:"Washington D.C.",code:"us",pop:"331 M",area:"9.83M km²"},
-  "Mexico":{name:"Messico",cap:"Città del Messico",code:"mx",pop:"126 M",area:"1.96M km²"},
-  "Belize":{name:"Belize",cap:"Belmopan",code:"bz",pop:"400k",area:"22k km²"},
-  "Costa Rica":{name:"Costa Rica",cap:"San José",code:"cr",pop:"5.1 M",area:"51k km²"},
-  "El Salvador":{name:"El Salvador",cap:"San Salvador",code:"sv",pop:"6.3 M",area:"21k km²"},
-  "Guatemala":{name:"Guatemala",cap:"Città del Guatemala",code:"gt",pop:"17 M",area:"108k km²"},
-  "Honduras":{name:"Honduras",cap:"Tegucigalpa",code:"hn",pop:"10 M",area:"112k km²"},
-  "Nicaragua":{name:"Nicaragua",cap:"Managua",code:"ni",pop:"6.8 M",area:"130k km²"},
-  "Panama":{name:"Panama",cap:"Panama",code:"pa",pop:"4.3 M",area:"75k km²"},
-  "Bahamas":{name:"Bahamas",cap:"Nassau",code:"bs",pop:"400k",area:"13k km²"},
-  "Cuba":{name:"Cuba",cap:"L'Avana",code:"cu",pop:"11 M",area:"109k km²"},
-  "Dominican Rep.":{name:"Repubblica Dominicana",cap:"Santo Domingo",code:"do",pop:"10 M",area:"48k km²"},
-  "Haiti":{name:"Haiti",cap:"Port-au-Prince",code:"ht",pop:"11 M",area:"27k km²"},
-  "Jamaica":{name:"Giamaica",cap:"Kingston",code:"jm",pop:"2.9 M",area:"10k km²"},
-  "Puerto Rico":{name:"Porto Rico",cap:"San Juan",code:"pr",pop:"3.2 M",area:"9k km²"},
-  "Trinidad and Tobago":{name:"Trinidad e Tobago",cap:"Port of Spain",code:"tt",pop:"1.3 M",area:"5k km²"},
-  "Greenland":{name:"Groenlandia",cap:"Nuuk",code:"gl",pop:"56k",area:"2.16M km²"},
-  "Falkland Is.":{name:"Isole Falkland",cap:"Stanley",code:"fk",pop:"3k",area:"12k km²"}
-};
+// Moved dictAmericas to data.js
 
 // ============= STATE =============
-let geoData=null, svg=null, mapGroup=null, pathGenerator=null, zoomBehavior=null;
-let currentMode=null, gameActive=false, totalStates=0;
+let geoData=null, svg=null, mapGroup=null, pathGenerator=null, zoomBehavior=null, cachedTopo=null;
+let currentMode=null, gameActive=false, totalStates=0, currentZone=null;
 let quizQueue=[], currentTarget=null, clickAnswers=[];
 let activeTypeFeature=null, typedAnswers={};
 let timerInterval=null, timeLeft=0;
@@ -54,7 +22,14 @@ function navigateTo(id){
 }
 
 function selectZone(zoneId){
-  if(zoneId!=='americas') return;
+  if(currentZone!==zoneId){
+    currentZone=zoneId;
+    mapLoaded=false;
+  }
+  document.querySelectorAll('.zone-card').forEach(c=>c.classList.remove('active'));
+  $('card-'+zoneId).classList.add('active');
+  const titles = {americas:'America', europe:'Europa', asia:'Asia', africa:'Africa'};
+  $('mode-title').innerText = titles[zoneId] || 'GeoQuiz';
   navigateTo('mode');
 }
 
@@ -69,12 +44,22 @@ let mapLoaded=false;
 async function loadMap(){
   if(mapLoaded) return;
   try{
-    const r=await fetch(URL_WORLD);
-    const topo=await r.json();
+    let topo = cachedTopo;
+    if(!topo){
+      const r=await fetch(URL_WORLD);
+      topo=await r.json();
+      cachedTopo=topo;
+    }
     const all=topojson.feature(topo,topo.objects.countries).features;
-    let feats=all.filter(f=>dictAmericas.hasOwnProperty(f.properties.name));
+    let dict = {};
+    if(currentZone==='americas') dict = dictAmericas;
+    else if(currentZone==='europe') dict = dictEurope;
+    else if(currentZone==='asia') dict = dictAsia;
+    else if(currentZone==='africa') dict = dictAfrica;
+
+    let feats=all.filter(f=>dict.hasOwnProperty(f.properties.name));
     feats.forEach(f=>{
-      const d=dictAmericas[f.properties.name];
+      const d=dict[f.properties.name];
       Object.assign(f.properties,{itName:d.name,cap:d.cap,code:d.code,pop:d.pop,area:d.area,type:'land'});
     });
     geoData={type:"FeatureCollection",features:feats};
@@ -323,6 +308,26 @@ function finishGame(title){
   $('results-emoji').innerText=wrong===0?'🏆':'📊';
   $('res-correct').innerText=correct;
   $('res-wrong').innerText=wrong;
+
+  if(currentMode==='time'){
+    $('res-wrong-row').classList.add('hidden');
+    $('res-time-row').classList.remove('hidden');
+    $('res-time').innerText=timeLeft+'s';
+    if(correct>0){
+      setTimeout(()=>{
+        const name=prompt("Ottimo tempo! Inserisci il tuo nome per la classifica:");
+        if(name){
+          const score={name,time:timeLeft,correct,date:new Date().toISOString(),zone:currentZone};
+          const scores=JSON.parse(localStorage.getItem('geoquiz_scores')||'[]');
+          scores.push(score);
+          localStorage.setItem('geoquiz_scores',JSON.stringify(scores));
+        }
+      },500);
+    }
+  }else{
+    $('res-wrong-row').classList.remove('hidden');
+    $('res-time-row').classList.add('hidden');
+  }
 
   if(currentMode==='type'){
     $('res-typos-row').classList.remove('hidden');

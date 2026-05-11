@@ -1,6 +1,6 @@
-const CACHE_NAME = 'geoquiz-cache-v2';
+const CACHE_NAME = 'geoquiz-cache-v3';
 const urlsToCache = [
-  './', './index.html', './app.css', './app.js',
+  './', './index.html', './app.css', './app.js', './data.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
   'https://cdn.tailwindcss.com',
   'https://d3js.org/d3.v7.min.js',
