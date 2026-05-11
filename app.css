@@ -60,3 +60,57 @@ body{font-family:'Baloo 2',sans-serif;background:#f0fdf4;color:#1e293b;overflow:
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+
+/* ============= DESKTOP (768px+) ============= */
+@media(min-width:768px){
+  /* Center menu screens */
+  #screen-zone > div,
+  #screen-mode > div,
+  #screen-results > div{max-width:520px;margin:0 auto;width:100%}
+
+  /* Zone grid: bigger cards */
+  .zone-grid{gap:16px}
+  .zone-card{padding:28px 20px}
+  .zone-card .emoji{font-size:3rem}
+  .zone-card .name{font-size:1.15rem}
+  .zone-card.active:hover{background:#bfdbfe;border-color:#2563eb;transform:scale(1.03)}
+
+  /* Buttons hover */
+  .btn-3d:hover{filter:brightness(1.04);transform:translateY(-1px)}
+  .btn-3d:active{transform:translateY(4px)}
+  .btn-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+  /* Game screen: side panel layout */
+  #screen-game{flex-direction:row}
+  .map-area{flex:1;height:100%}
+
+  /* Bottom sheet becomes side panel */
+  .bottom-sheet{
+    position:relative;
+    bottom:auto;left:auto;right:auto;
+    width:380px;
+    max-height:100dvh;
+    height:100%;
+    border-radius:0;
+    box-shadow:-4px 0 20px rgba(0,0,0,.08);
+    flex-shrink:0;
+    padding:24px 28px;
+    overflow-y:auto;
+  }
+  .bottom-sheet .handle{display:none}
+
+  /* Back button bigger on desktop */
+  .back-btn{width:48px;height:48px}
+  .back-btn:hover{background:#f1f5f9;border-color:#94a3b8}
+}
+
+/* ============= LARGE DESKTOP (1200px+) ============= */
+@media(min-width:1200px){
+  #screen-zone > div,
+  #screen-mode > div,
+  #screen-results > div{max-width:600px}
+
+  .bottom-sheet{width:420px;padding:28px 32px}
+
+  .zone-grid{grid-template-columns:repeat(2,1fr);gap:20px;max-width:480px;margin:0 auto}
+}
