@@ -4,7 +4,7 @@ const URL_WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.jso
 
 // ============= STATE =============
 let geoData=null, svg=null, mapGroup=null, pathGenerator=null, zoomBehavior=null, cachedTopo=null;
-let currentMode=null, gameActive=false, totalStates=0, currentZone=null;
+let currentMode=null, gameActive=false, totalStates=0, currentZone=null, timeAttackWrongClicks=0;
 let quizQueue=[], currentTarget=null, clickAnswers=[];
 let activeTypeFeature=null, typedAnswers={};
 let timerInterval=null, timeLeft=0;
@@ -118,6 +118,8 @@ async function startGame(mode){
       gameActive=false;
       return;
     }
+    // Reset logic
+    gameActive=true;currentMode=mode;timeLeft=0;clickAnswers=[];typedAnswers={};timeAttackWrongClicks=0;
     if(mode==='type'){
       $('sheet-type').style.display='block';
       totalStates=geoData.features.length;
@@ -234,6 +236,7 @@ function handleMapClick(event,d){
     }else{
       el.classed('wrong',true);setTimeout(()=>el.classed('wrong',false),350);
       timeLeft=Math.max(0,timeLeft-2);
+      timeAttackWrongClicks++;
       showTimeFloat(-2,event.clientX,event.clientY);updateTimerUI();
     }
   }else{
@@ -302,8 +305,9 @@ function finishGame(title){
     .classed('selected',false).classed('active-typing',false).classed('answered',false)
     .attr('class',d=>`map-path ${correctIds.includes(d.id)?'correct':'wrong'}`);
 
-  // Navigate to results
-  navigateTo('results');
+  // Open results bottom sheet over the map
+  document.querySelectorAll('.bottom-sheet').forEach(s=>s.style.display='none');
+  $('sheet-results').style.display='flex';
   $('results-title').innerText=title||'Risultati';
   $('results-emoji').innerText=wrong===0?'🏆':'📊';
   $('res-correct').innerText=correct;
@@ -312,7 +316,9 @@ function finishGame(title){
   if(currentMode==='time'){
     $('res-wrong-row').classList.add('hidden');
     $('res-time-row').classList.remove('hidden');
+    $('res-wrong-clicks-row').classList.remove('hidden');
     $('res-time').innerText=timeLeft+'s';
+    $('res-wrong-clicks').innerText=timeAttackWrongClicks;
     if(correct>0){
       setTimeout(()=>{
         const name=prompt("Ottimo tempo! Inserisci il tuo nome per la classifica:");
@@ -327,6 +333,7 @@ function finishGame(title){
   }else{
     $('res-wrong-row').classList.remove('hidden');
     $('res-time-row').classList.add('hidden');
+    $('res-wrong-clicks-row').classList.add('hidden');
   }
 
   if(currentMode==='type'){

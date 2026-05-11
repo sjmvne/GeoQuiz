@@ -127,32 +127,32 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- SCREEN 4: Results -->
-<div id="screen-results" class="screen">
-  <div class="flex-1 flex flex-col px-6 py-8 overflow-y-auto">
-    <div class="text-center mb-6">
+  <!-- Bottom Sheet: Results -->
+  <div id="sheet-results" class="bottom-sheet" style="display:none; max-height:60dvh;">
+    <div class="handle"></div>
+    <div class="text-center mb-4">
       <div class="text-5xl mb-2" id="results-emoji">🎉</div>
       <h2 id="results-title" class="text-2xl font-extrabold text-slate-800">Risultati</h2>
     </div>
-    <div class="flex flex-col gap-3 mb-6">
-      <div class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-4 rounded-2xl"><span class="font-bold text-green-700">Esatti</span><span id="res-correct" class="text-2xl font-extrabold text-green-600">0</span></div>
-      <div id="res-typos-row" class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-4 rounded-2xl"><span class="font-bold text-yellow-700">Typos</span><span id="res-typos" class="text-2xl font-extrabold text-yellow-600">0</span></div>
-      <div id="res-wrong-row" class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-4 rounded-2xl"><span class="font-bold text-red-700">Sbagliati</span><span id="res-wrong" class="text-2xl font-extrabold text-red-600">0</span></div>
-      <div id="res-time-row" class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl"><span class="font-bold text-blue-700">Tempo Rimasto</span><span id="res-time" class="text-2xl font-extrabold text-blue-600">0s</span></div>
+    <div class="flex flex-col gap-2 mb-4">
+      <div class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-3 rounded-2xl"><span class="font-bold text-green-700">Esatti</span><span id="res-correct" class="text-2xl font-extrabold text-green-600">0</span></div>
+      <div id="res-typos-row" class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-3 rounded-2xl"><span class="font-bold text-yellow-700">Typos</span><span id="res-typos" class="text-2xl font-extrabold text-yellow-600">0</span></div>
+      <div id="res-wrong-row" class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-3 rounded-2xl"><span class="font-bold text-red-700">Sbagliati</span><span id="res-wrong" class="text-2xl font-extrabold text-red-600">0</span></div>
+      <div id="res-time-row" class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-3 rounded-2xl"><span class="font-bold text-blue-700">Tempo Rimasto</span><span id="res-time" class="text-2xl font-extrabold text-blue-600">0s</span></div>
+      <div id="res-wrong-clicks-row" class="hidden flex justify-between items-center bg-orange-50 border-2 border-orange-200 p-3 rounded-2xl"><span class="font-bold text-orange-700">Errori</span><span id="res-wrong-clicks" class="text-2xl font-extrabold text-orange-600">0</span></div>
     </div>
     <div id="typo-details" class="hidden mb-4">
       <p class="text-xs font-bold text-slate-500 uppercase mb-2">Dettagli</p>
-      <ul id="typo-list" class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 max-h-40 overflow-y-auto"></ul>
+      <ul id="typo-list" class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 max-h-32 overflow-y-auto"></ul>
     </div>
-    <div class="mt-auto flex flex-col gap-3">
+    <div class="mt-auto flex flex-col gap-2">
       <button class="btn-cta" onclick="startGame(currentMode)">Rigioca</button>
-      <button class="btn-3d slate" onclick="navigateTo('mode')" style="justify-content:center"><div class="label text-sm">Cambia modalita</div></button>
-      <button class="btn-3d slate" onclick="navigateTo('zone')" style="justify-content:center"><div class="label text-sm">Cambia zona</div></button>
+      <button class="btn-3d slate" onclick="exitGame()" style="justify-content:center; padding:10px;"><div class="label text-sm">Cambia modalità / zona</div></button>
     </div>
   </div>
 </div>
+
+
 
 <script src="./data.js"></script>
 <script src="./app.js"></script>
