@@ -234,8 +234,9 @@ body {
 .map-path {
   fill: #f1f5f9;
   stroke: #94a3b8;
-  stroke-width: .3px;
+  stroke-width: .5px;
   stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
   transition: fill .2s, stroke .2s;
   cursor: pointer
 }
