@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cartina Muta - Esercizi di Geografia</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <!-- Tailwind CSS per il design moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- D3.js per disegnare le mappe in SVG -->
@@ -81,35 +87,7 @@
             pointer-events: none;
         }
 
-        /* Stili per i mari/oceani */
-        .water-circle {
-            fill: #bae6fd;
-            stroke: #38bdf8;
-            stroke-width: 2px;
-            transition: fill 0.2s ease, transform 0.2s ease;
-        }
-
-        .water-group.active-typing .water-circle,
-        .water-group.active-explore .water-circle {
-            fill: #d8b4fe !important;
-            stroke: #7e22ce;
-            transform: scale(1.2);
-        }
-
-        .water-group.active-explore .water-circle {
-            fill: #93c5fd !important;
-            stroke: #1d4ed8;
-        }
-
-        .water-group.selected .water-circle {
-            fill: #7dd3fc !important;
-        }
-
-        .water-group.correct .water-circle {
-            fill: #86efac !important;
-            stroke: #14532d;
-            pointer-events: none;
-        }
+        
 
         .water-group.wrong .water-circle {
             fill: #fca5a5 !important;
@@ -342,8 +320,7 @@
                         <div class="flex items-center gap-4 mb-4 pb-4 border-b border-slate-100">
                             <img id="exp-flag" src=""
                                 class="w-16 h-auto border border-slate-200 rounded shadow-sm hidden" alt="Bandiera">
-                            <div id="exp-water-icon" class="text-4xl hidden">🌊</div>
-                            <div>
+                                                        <div>
                                 <h2 id="exp-name" class="text-xl font-black text-slate-800">Nome</h2>
                                 <p id="exp-cap" class="text-sm text-slate-500 font-semibold">Capitale: <span
                                         class="text-slate-700">...</span></p>
@@ -487,8 +464,7 @@
             expPrompt: document.getElementById('explore-prompt'),
             expInfo: document.getElementById('explore-info'),
             expFlag: document.getElementById('exp-flag'),
-            expWater: document.getElementById('exp-water-icon'),
-            expName: document.getElementById('exp-name'),
+                        expName: document.getElementById('exp-name'),
             expCap: document.getElementById('exp-cap'),
             expPop: document.getElementById('exp-pop'),
             expArea: document.getElementById('exp-area'),
@@ -546,13 +522,7 @@
             "Falkland Is.": { name: "Isole Falkland", cap: "Stanley", code: "fk", pop: "3k", area: "12k km²" }
         };
 
-        const waterBodies = [
-            { id: "w_pacific", properties: { name: "Pacific Ocean", itName: "Oceano Pacifico", type: "water", pop: "-", area: "165M km²" }, geometry: { type: "Point", coordinates: [-105, 0] } },
-            { id: "w_atlantic", properties: { name: "Atlantic Ocean", itName: "Oceano Atlantico", type: "water", pop: "-", area: "106M km²" }, geometry: { type: "Point", coordinates: [-45, 25] } },
-            { id: "w_caribbean", properties: { name: "Caribbean Sea", itName: "Mar dei Caraibi", type: "water", pop: "-", area: "2.7M km²" }, geometry: { type: "Point", coordinates: [-75, 15] } },
-            { id: "w_mexico", properties: { name: "Gulf of Mexico", itName: "Golfo del Messico", type: "water", pop: "-", area: "1.6M km²" }, geometry: { type: "Point", coordinates: [-90, 25] } },
-            { id: "w_arctic", properties: { name: "Arctic Ocean", itName: "Oceano Artico", type: "water", pop: "-", area: "14M km²" }, geometry: { type: "Point", coordinates: [-100, 80] } }
-        ];
+        
 
         // ==========================================
         // INIT & CARICAMENTO
@@ -596,7 +566,7 @@
                     f.properties.type = 'land';
                 });
 
-                features = features.concat(waterBodies);
+                
                 geoData = { type: "FeatureCollection", features: features };
 
                 renderSVGMap(geoData);
@@ -626,7 +596,7 @@
 
             mapGroup = svg.append('g').attr('id', 'map-group');
 
-            const landFeatures = featureCollection.features.filter(f => f.properties.type !== 'water');
+            const landFeatures = featureCollection.features;
             const projection = d3.geoMercator().fitExtent([[width * 0.05, height * 0.05], [width * 0.95, height * 0.95]], { type: "FeatureCollection", features: landFeatures });
             pathGenerator = d3.geoPath().projection(projection);
 
@@ -640,23 +610,7 @@
                 .on('mousemove', moveTooltip)
                 .on('mouseleave', hideTooltip);
 
-            const waterFeats = featureCollection.features.filter(f => f.properties.type === 'water');
-            mapGroup.selectAll('g.water-group')
-                .data(waterFeats)
-                .enter().append('g')
-                .attr('class', 'water-group cursor-pointer')
-                .attr('transform', d => {
-                    const coords = projection(d.geometry.coordinates);
-                    return `translate(${coords[0]}, ${coords[1]})`;
-                })
-                .on('click', handleMapClick)
-                .on('mouseenter', showTooltip)
-                .on('mousemove', moveTooltip)
-                .on('mouseleave', hideTooltip)
-                .each(function () {
-                    d3.select(this).append('circle').attr('r', 8).attr('class', 'water-circle');
-                    d3.select(this).append('text').text('🌊').attr('text-anchor', 'middle').attr('dominant-baseline', 'central').style('font-size', '10px').style('pointer-events', 'none');
-                });
+            
 
             zoomBehavior = d3.zoom()
                 .scaleExtent([1, 8])
@@ -683,8 +637,7 @@
             // Ripristina mappa
             if (mapGroup) {
                 mapGroup.selectAll('.map-path').attr('class', 'map-path');
-                mapGroup.selectAll('.water-group').attr('class', 'water-group cursor-pointer');
-                svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity); // Reset zoom
+                                svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity); // Reset zoom
             }
             hideTooltip();
         };
@@ -839,8 +792,7 @@
             if (gameMode === 'type') {
                 activeTypeFeature = d;
                 mapGroup.selectAll('.map-path').classed('active-typing', false);
-                mapGroup.selectAll('.water-group').classed('active-typing', false);
-                el.classed('active-typing', true);
+                                el.classed('active-typing', true);
 
                 els.typePrompt.classList.add('hidden');
                 els.typeInputSection.classList.remove('hidden');
@@ -886,8 +838,7 @@
         // --- Logica Explore Mode ---
         function handleExploreClick(d) {
             mapGroup.selectAll('.map-path').classed('active-explore', false);
-            mapGroup.selectAll('.water-group').classed('active-explore', false);
-            d3.select(event.currentTarget).classed('active-explore', true);
+                        d3.select(event.currentTarget).classed('active-explore', true);
 
             els.expPrompt.classList.add('hidden');
             els.expInfo.classList.remove('hidden');
@@ -895,16 +846,9 @@
 
             els.expName.innerText = d.properties.itName;
 
-            if (d.properties.type === 'land') {
-                els.expWater.classList.add('hidden');
-                els.expFlag.src = `https://flagcdn.com/h80/${d.properties.code}.png`;
-                els.expFlag.classList.remove('hidden');
-                els.expCap.innerHTML = `Capitale: <span class="text-slate-800 font-bold">${d.properties.cap}</span>`;
-            } else {
-                els.expFlag.classList.add('hidden');
-                els.expWater.classList.remove('hidden');
-                els.expCap.innerHTML = `Tipo: <span class="text-blue-600 font-bold">Massa d'acqua</span>`;
-            }
+            els.expFlag.src = `https://flagcdn.com/h80/${d.properties.code}.png`;
+            els.expFlag.classList.remove('hidden');
+            els.expCap.innerHTML = `Capitale: <span class="text-slate-800 font-bold">${d.properties.cap}</span>`;
 
             els.expPop.innerText = d.properties.pop;
             els.expArea.innerText = d.properties.area;
@@ -936,16 +880,14 @@
         function clearActiveTypeSelection() {
             activeTypeFeature = null;
             mapGroup.selectAll('.map-path').classed('active-typing', false);
-            mapGroup.selectAll('.water-group').classed('active-typing', false);
-            els.typeInputSection.classList.add('hidden');
+                        els.typeInputSection.classList.add('hidden');
             els.typeInputSection.classList.remove('flex');
             els.typePrompt.classList.remove('hidden');
         }
 
         function markFeatureSelected(id, isSelected) {
             mapGroup.selectAll('.map-path').filter(d => d.id === id).classed('selected', isSelected);
-            mapGroup.selectAll('.water-group').filter(d => d.id === id).classed('selected', isSelected);
-        }
+                    }
 
         function updateTypeProgressUI() {
             els.typeProgress.innerText = `${Object.keys(typedAnswers).length} / ${totalStates}`;
@@ -1035,9 +977,7 @@
                     .classed('selected', false).classed('active-typing', false)
                     .attr('class', d => `map-path ${correctIds.includes(d.id) ? 'correct' : 'wrong'}`);
 
-                mapGroup.selectAll('.water-group')
-                    .classed('selected', false).classed('active-typing', false)
-                    .attr('class', d => `water-group cursor-pointer ${correctIds.includes(d.id) ? 'correct' : 'wrong'}`);
+
 
                 if (wrongCount === 0 && correctCount > 0) fireConfetti();
 
@@ -1119,6 +1059,13 @@
         }
 
         document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW reg:', reg)).catch(err => console.log('SW fail:', err));
+            });
+        }
     </script>
 </body>
 
