@@ -26,8 +26,8 @@ body{font-family:'Baloo 2',sans-serif;background:#f0fdf4;color:#1e293b;overflow:
 .zone-card{border-radius:20px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .15s;border:3px solid transparent;position:relative;overflow:hidden}
 .zone-card:active{transform:scale(.96)}
 .zone-card .emoji{font-size:2.4rem;display:block;margin-bottom:4px}
-.zone-card .name{font-weight:800;font-size:1rem}
-.zone-card .count{font-size:.7rem;font-weight:600;opacity:.6}
+.zone-card .name{font-weight:800;font-size:1rem;display:block}
+.zone-card .count{font-size:.7rem;font-weight:600;opacity:.6;display:block}
 .zone-card.active{background:#dbeafe;border-color:#3b82f6}
 .zone-card.wip{background:#f1f5f9;border-color:#e2e8f0}
 .zone-card.wip::after{content:'IN ARRIVO';position:absolute;top:8px;right:-20px;background:#94a3b8;color:#fff;font-size:.55rem;font-weight:800;padding:2px 24px;transform:rotate(35deg);letter-spacing:.5px}

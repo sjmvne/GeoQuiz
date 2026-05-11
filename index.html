@@ -23,14 +23,16 @@
     <div class="text-5xl mb-2">🌍</div>
     <h1 class="text-3xl font-extrabold text-slate-800 mb-1">GeoQuiz</h1>
     <p class="text-sm font-semibold text-slate-500 mb-8">Impara la geografia divertendoti!</p>
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 self-start">Scegli una zona</p>
-    <div class="zone-grid w-full max-w-sm">
-      <div class="zone-card active" onclick="selectZone('americas')">
-        <span class="emoji">🌎</span><span class="name">America</span><span class="count">31 stati</span>
+    <div class="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
+      <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-left">Scegli una zona</p>
+      <div class="zone-grid w-full">
+        <div class="zone-card active" onclick="selectZone('americas')">
+          <span class="emoji">🌎</span><span class="name">America</span><span class="count">31 stati</span>
+        </div>
+        <div class="zone-card wip"><span class="emoji">🌍</span><span class="name">Europa</span><span class="count"></span></div>
+        <div class="zone-card wip"><span class="emoji">🌏</span><span class="name">Asia</span><span class="count"></span></div>
+        <div class="zone-card wip"><span class="emoji">🌍</span><span class="name">Africa</span><span class="count"></span></div>
       </div>
-      <div class="zone-card wip"><span class="emoji">🌍</span><span class="name">Europa</span><span class="count"></span></div>
-      <div class="zone-card wip"><span class="emoji">🌏</span><span class="name">Asia</span><span class="count"></span></div>
-      <div class="zone-card wip"><span class="emoji">🌍</span><span class="name">Africa</span><span class="count"></span></div>
     </div>
   </div>
 </div>
