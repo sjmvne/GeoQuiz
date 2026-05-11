@@ -1,161 +1,243 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>GeoQuiz - Impara la Geografia</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#58cc02">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://unpkg.com/topojson-client@3"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<link rel="stylesheet" href="./app.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>GeoQuiz - Impara la Geografia</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#58cc02">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="./app.css">
 </head>
+
 <body>
 
-<!-- SCREEN 1: Zone Select -->
-<div id="screen-zone" class="screen active screen-enter">
-  <div class="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
-    <div class="text-5xl mb-2">🌍</div>
-    <h1 class="text-3xl font-extrabold text-slate-800 mb-1">GeoQuiz</h1>
-    <p class="text-sm font-semibold text-slate-500 mb-8">Impara la geografia divertendoti!</p>
-    <div class="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
-      <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-left">Scegli una zona</p>
-      <div class="zone-grid w-full">
-        <div class="zone-card active" id="card-americas" onclick="selectZone('americas')">
-          <span class="emoji">🌎</span><span class="name">America</span><span class="count">31 stati</span>
+    <!-- SCREEN 1: Zone Select -->
+    <div id="screen-zone" class="screen active screen-enter">
+        <div class="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
+            <div class="text-5xl mb-2">🌍</div>
+            <h1 class="text-3xl font-extrabold text-slate-800 mb-1">GeoQuiz</h1>
+            <p class="text-sm font-semibold text-slate-500 mb-8">Impara la geografia divertendoti!</p>
+            <div class="w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-left alignDivCenter">
+                    Scegli una zona</p>
+                <div class="zone-grid w-full">
+                    <div class="zone-card active" id="card-americas" onclick="selectZone('americas')">
+                        <span class="emoji">🌎</span><span class="name">America</span><span class="count">31
+                            stati</span>
+                    </div>
+                    <div class="zone-card" id="card-europe" onclick="selectZone('europe')">
+                        <span class="emoji">🌍</span><span class="name">Europa</span><span class="count">39 stati</span>
+                    </div>
+                    <div class="zone-card" id="card-asia" onclick="selectZone('asia')">
+                        <span class="emoji">🌏</span><span class="name">Asia</span><span class="count">48 stati</span>
+                    </div>
+                    <div class="zone-card" id="card-africa" onclick="selectZone('africa')">
+                        <span class="emoji">🌍</span><span class="name">Africa</span><span class="count">52 stati</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="zone-card" id="card-europe" onclick="selectZone('europe')">
-          <span class="emoji">🌍</span><span class="name">Europa</span><span class="count">39 stati</span>
+    </div>
+
+    <!-- SCREEN 2: Mode Select -->
+    <div id="screen-mode" class="screen">
+        <div class="flex-1 flex flex-col px-6 py-6 overflow-y-auto">
+            <button class="flex items-center gap-2 text-slate-500 font-bold text-sm mb-6" onclick="navigateTo('zone')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+                Torna alle zone
+            </button>
+            <h2 class="text-2xl font-extrabold text-slate-800 mb-1" id="mode-title">America</h2>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5">Scegli una modalita</p>
+            <div class="flex flex-col gap-3 pb-6">
+                <button class="btn-3d blue" onclick="startGame('click')"><span class="icon">👆</span>
+                    <div>
+                        <div class="label">Tocca la Mappa</div>
+                        <div class="desc">Trova lo stato indicato</div>
+                    </div>
+                </button>
+                <button class="btn-3d purple" onclick="startGame('type')"><span class="icon">⌨️</span>
+                    <div>
+                        <div class="label">Scrivi i Nomi</div>
+                        <div class="desc">Mappa muta, scrivi tu i nomi</div>
+                    </div>
+                </button>
+                <button class="btn-3d red" onclick="startGame('time')"><span class="icon">⏱️</span>
+                    <div>
+                        <div class="label">Time Attack</div>
+                        <div class="desc">60s. +2s esatto, -2s errore!</div>
+                    </div>
+                </button>
+                <button class="btn-3d amber" onclick="startGame('capital')"><span class="icon">🏛️</span>
+                    <div>
+                        <div class="label">Capitali</div>
+                        <div class="desc">Trova lo stato dalla capitale</div>
+                    </div>
+                </button>
+                <button class="btn-3d teal" onclick="startGame('flag')"><span class="icon">🏁</span>
+                    <div>
+                        <div class="label">Bandiere</div>
+                        <div class="desc">Riconosci la bandiera</div>
+                    </div>
+                </button>
+                <button class="btn-3d slate" onclick="startGame('explore')"><span class="icon">🔍</span>
+                    <div>
+                        <div class="label">Esplorazione Libera</div>
+                        <div class="desc">Mappa interattiva con info</div>
+                    </div>
+                </button>
+            </div>
         </div>
-        <div class="zone-card" id="card-asia" onclick="selectZone('asia')">
-          <span class="emoji">🌏</span><span class="name">Asia</span><span class="count">48 stati</span>
+    </div>
+
+    <!-- SCREEN 3: Game -->
+    <div id="screen-game" class="screen">
+        <div id="map-area" class="map-area">
+            <button class="back-btn" onclick="exitGame()"><svg viewBox="0 0 24 24" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg></button>
+            <div class="map-tooltip" id="map-tooltip"><span id="tooltip-text"></span></div>
         </div>
-        <div class="zone-card" id="card-africa" onclick="selectZone('africa')">
-          <span class="emoji">🌍</span><span class="name">Africa</span><span class="count">52 stati</span>
+        <!-- Bottom Sheet: Click modes -->
+        <div id="sheet-click" class="bottom-sheet" style="display:none">
+            <div class="handle"></div>
+            <div class="flex items-center justify-between mb-2">
+                <span id="click-label" class="text-xs font-bold text-slate-400 uppercase">Trova:</span>
+                <div class="flex items-center gap-2">
+                    <span id="time-badge" class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-lg"
+                        style="display:none"></span>
+                    <span id="click-progress"
+                        class="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-lg">1/31</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="click-bar" style="width:0%"></div>
+            </div>
+            <div id="target-box"
+                class="bg-slate-50 rounded-2xl p-4 text-center mb-3 min-h-[80px] flex flex-col items-center justify-center transition-all">
+                <h2 id="target-name" class="text-2xl font-extrabold text-slate-800"></h2>
+                <img id="target-flag" src="" alt="" class="hidden w-24 rounded shadow-sm border border-slate-200">
+            </div>
+            <button class="btn-3d slate" id="btn-skip" style="padding:10px 16px"><span class="icon text-base">⏭️</span>
+                <div class="label text-sm">Salta</div>
+            </button>
+            <button class="btn-cta mt-3" id="btn-finish-click" onclick="finishGame()">Termina e Verifica</button>
         </div>
-      </div>
+        <!-- Bottom Sheet: Type mode -->
+        <div id="sheet-type" class="bottom-sheet" style="display:none">
+            <div class="handle"></div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-400 uppercase">Risposte:</span>
+                <span id="type-progress"
+                    class="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded-lg">0/31</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="type-bar" style="width:0%;background:#a855f7"></div>
+            </div>
+            <div id="type-prompt" class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 text-center">
+                <p class="text-sm font-bold text-purple-800">👆 Tocca uno stato sulla mappa per scriverne il nome.</p>
+            </div>
+            <div id="type-input-area" class="hidden">
+                <form id="type-form" class="relative mb-2">
+                    <input type="text" id="type-input" placeholder="Scrivi il nome..." autocomplete="off"
+                        class="w-full p-3 pr-16 border-2 border-slate-300 rounded-2xl bg-white text-slate-700 font-bold text-base focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100">
+                    <button type="submit"
+                        class="absolute right-1.5 top-1.5 bottom-1.5 bg-purple-600 text-white px-4 rounded-xl font-bold hover:bg-purple-700 transition-colors">OK</button>
+                </form>
+                <div class="flex justify-between">
+                    <button type="button" id="btn-clear-type"
+                        class="text-xs text-slate-500 hover:text-red-500 font-bold">Annulla</button>
+                    <button type="button" id="btn-delete-answer"
+                        class="hidden text-xs text-red-500 hover:text-red-700 font-bold">Cancella risposta</button>
+                </div>
+            </div>
+            <button class="btn-cta mt-3" onclick="finishGame()">Termina e Verifica</button>
+        </div>
+        <!-- Bottom Sheet: Explore -->
+        <div id="sheet-explore" class="bottom-sheet" style="display:none">
+            <div class="handle"></div>
+            <div id="explore-prompt" class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 text-center">
+                <p class="text-sm font-bold text-blue-800">👆 Tocca uno stato sulla mappa per scoprirne i dettagli.</p>
+            </div>
+            <div id="explore-info" class="hidden">
+                <div class="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100">
+                    <img id="exp-flag" src="" class="w-14 rounded shadow-sm border border-slate-200" alt="">
+                    <div>
+                        <h3 id="exp-name" class="text-lg font-extrabold text-slate-800"></h3>
+                        <p id="exp-cap" class="text-sm text-slate-500 font-semibold"></p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Popolazione</p>
+                        <p id="exp-pop" class="font-bold text-slate-700"></p>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Superficie</p>
+                        <p id="exp-area" class="font-bold text-slate-700"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Bottom Sheet: Results -->
+        <div id="sheet-results" class="bottom-sheet" style="display:none; max-height:60dvh;">
+            <div class="handle"></div>
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2" id="results-emoji">🎉</div>
+                <h2 id="results-title" class="text-2xl font-extrabold text-slate-800">Risultati</h2>
+            </div>
+            <div class="flex flex-col gap-2 mb-4">
+                <div class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-3 rounded-2xl">
+                    <span class="font-bold text-green-700">Esatti</span><span id="res-correct"
+                        class="text-2xl font-extrabold text-green-600">0</span></div>
+                <div id="res-typos-row"
+                    class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-3 rounded-2xl">
+                    <span class="font-bold text-yellow-700">Typos</span><span id="res-typos"
+                        class="text-2xl font-extrabold text-yellow-600">0</span></div>
+                <div id="res-wrong-row"
+                    class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-3 rounded-2xl"><span
+                        class="font-bold text-red-700">Sbagliati</span><span id="res-wrong"
+                        class="text-2xl font-extrabold text-red-600">0</span></div>
+                <div id="res-time-row"
+                    class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-3 rounded-2xl">
+                    <span class="font-bold text-blue-700">Tempo Rimasto</span><span id="res-time"
+                        class="text-2xl font-extrabold text-blue-600">0s</span></div>
+                <div id="res-wrong-clicks-row"
+                    class="hidden flex justify-between items-center bg-orange-50 border-2 border-orange-200 p-3 rounded-2xl">
+                    <span class="font-bold text-orange-700">Errori</span><span id="res-wrong-clicks"
+                        class="text-2xl font-extrabold text-orange-600">0</span></div>
+            </div>
+            <div id="typo-details" class="hidden mb-4">
+                <p class="text-xs font-bold text-slate-500 uppercase mb-2">Dettagli</p>
+                <ul id="typo-list"
+                    class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 max-h-32 overflow-y-auto">
+                </ul>
+            </div>
+            <div class="mt-auto flex flex-col gap-2">
+                <button class="btn-cta" onclick="startGame(currentMode)">Rigioca</button>
+                <button class="btn-3d slate" onclick="exitGame()" style="justify-content:center; padding:10px;">
+                    <div class="label text-sm">Cambia modalità / zona</div>
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-
-<!-- SCREEN 2: Mode Select -->
-<div id="screen-mode" class="screen">
-  <div class="flex-1 flex flex-col px-6 py-6 overflow-y-auto">
-    <button class="flex items-center gap-2 text-slate-500 font-bold text-sm mb-6" onclick="navigateTo('zone')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Torna alle zone
-    </button>
-    <h2 class="text-2xl font-extrabold text-slate-800 mb-1" id="mode-title">America</h2>
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5">Scegli una modalita</p>
-    <div class="flex flex-col gap-3 pb-6">
-      <button class="btn-3d blue" onclick="startGame('click')"><span class="icon">👆</span><div><div class="label">Tocca la Mappa</div><div class="desc">Trova lo stato indicato</div></div></button>
-      <button class="btn-3d purple" onclick="startGame('type')"><span class="icon">⌨️</span><div><div class="label">Scrivi i Nomi</div><div class="desc">Mappa muta, scrivi tu i nomi</div></div></button>
-      <button class="btn-3d red" onclick="startGame('time')"><span class="icon">⏱️</span><div><div class="label">Time Attack</div><div class="desc">60s. +2s esatto, -2s errore!</div></div></button>
-      <button class="btn-3d amber" onclick="startGame('capital')"><span class="icon">🏛️</span><div><div class="label">Capitali</div><div class="desc">Trova lo stato dalla capitale</div></div></button>
-      <button class="btn-3d teal" onclick="startGame('flag')"><span class="icon">🏁</span><div><div class="label">Bandiere</div><div class="desc">Riconosci la bandiera</div></div></button>
-      <button class="btn-3d slate" onclick="startGame('explore')"><span class="icon">🔍</span><div><div class="label">Esplorazione Libera</div><div class="desc">Mappa interattiva con info</div></div></button>
-    </div>
-  </div>
-</div>
-
-<!-- SCREEN 3: Game -->
-<div id="screen-game" class="screen">
-  <div id="map-area" class="map-area">
-    <button class="back-btn" onclick="exitGame()"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <div class="map-tooltip" id="map-tooltip"><span id="tooltip-text"></span></div>
-  </div>
-  <!-- Bottom Sheet: Click modes -->
-  <div id="sheet-click" class="bottom-sheet" style="display:none">
-    <div class="handle"></div>
-    <div class="flex items-center justify-between mb-2">
-      <span id="click-label" class="text-xs font-bold text-slate-400 uppercase">Trova:</span>
-      <div class="flex items-center gap-2">
-        <span id="time-badge" class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-lg" style="display:none"></span>
-        <span id="click-progress" class="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-lg">1/31</span>
-      </div>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="click-bar" style="width:0%"></div></div>
-    <div id="target-box" class="bg-slate-50 rounded-2xl p-4 text-center mb-3 min-h-[80px] flex flex-col items-center justify-center transition-all">
-      <h2 id="target-name" class="text-2xl font-extrabold text-slate-800"></h2>
-      <img id="target-flag" src="" alt="" class="hidden w-24 rounded shadow-sm border border-slate-200">
-    </div>
-    <button class="btn-3d slate" id="btn-skip" style="padding:10px 16px"><span class="icon text-base">⏭️</span><div class="label text-sm">Salta</div></button>
-    <button class="btn-cta mt-3" id="btn-finish-click" onclick="finishGame()">Termina e Verifica</button>
-  </div>
-  <!-- Bottom Sheet: Type mode -->
-  <div id="sheet-type" class="bottom-sheet" style="display:none">
-    <div class="handle"></div>
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs font-bold text-slate-400 uppercase">Risposte:</span>
-      <span id="type-progress" class="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded-lg">0/31</span>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="type-bar" style="width:0%;background:#a855f7"></div></div>
-    <div id="type-prompt" class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 text-center">
-      <p class="text-sm font-bold text-purple-800">👆 Tocca uno stato sulla mappa per scriverne il nome.</p>
-    </div>
-    <div id="type-input-area" class="hidden">
-      <form id="type-form" class="relative mb-2">
-        <input type="text" id="type-input" placeholder="Scrivi il nome..." autocomplete="off" class="w-full p-3 pr-16 border-2 border-slate-300 rounded-2xl bg-white text-slate-700 font-bold text-base focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100">
-        <button type="submit" class="absolute right-1.5 top-1.5 bottom-1.5 bg-purple-600 text-white px-4 rounded-xl font-bold hover:bg-purple-700 transition-colors">OK</button>
-      </form>
-      <div class="flex justify-between">
-        <button type="button" id="btn-clear-type" class="text-xs text-slate-500 hover:text-red-500 font-bold">Annulla</button>
-        <button type="button" id="btn-delete-answer" class="hidden text-xs text-red-500 hover:text-red-700 font-bold">Cancella risposta</button>
-      </div>
-    </div>
-    <button class="btn-cta mt-3" onclick="finishGame()">Termina e Verifica</button>
-  </div>
-  <!-- Bottom Sheet: Explore -->
-  <div id="sheet-explore" class="bottom-sheet" style="display:none">
-    <div class="handle"></div>
-    <div id="explore-prompt" class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 text-center">
-      <p class="text-sm font-bold text-blue-800">👆 Tocca uno stato sulla mappa per scoprirne i dettagli.</p>
-    </div>
-    <div id="explore-info" class="hidden">
-      <div class="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100">
-        <img id="exp-flag" src="" class="w-14 rounded shadow-sm border border-slate-200" alt="">
-        <div><h3 id="exp-name" class="text-lg font-extrabold text-slate-800"></h3><p id="exp-cap" class="text-sm text-slate-500 font-semibold"></p></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3 text-sm">
-        <div class="bg-slate-50 p-2 rounded-lg"><p class="text-[10px] text-slate-400 font-bold uppercase">Popolazione</p><p id="exp-pop" class="font-bold text-slate-700"></p></div>
-        <div class="bg-slate-50 p-2 rounded-lg"><p class="text-[10px] text-slate-400 font-bold uppercase">Superficie</p><p id="exp-area" class="font-bold text-slate-700"></p></div>
-      </div>
-    </div>
-  </div>
-  <!-- Bottom Sheet: Results -->
-  <div id="sheet-results" class="bottom-sheet" style="display:none; max-height:60dvh;">
-    <div class="handle"></div>
-    <div class="text-center mb-4">
-      <div class="text-5xl mb-2" id="results-emoji">🎉</div>
-      <h2 id="results-title" class="text-2xl font-extrabold text-slate-800">Risultati</h2>
-    </div>
-    <div class="flex flex-col gap-2 mb-4">
-      <div class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-3 rounded-2xl"><span class="font-bold text-green-700">Esatti</span><span id="res-correct" class="text-2xl font-extrabold text-green-600">0</span></div>
-      <div id="res-typos-row" class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-3 rounded-2xl"><span class="font-bold text-yellow-700">Typos</span><span id="res-typos" class="text-2xl font-extrabold text-yellow-600">0</span></div>
-      <div id="res-wrong-row" class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-3 rounded-2xl"><span class="font-bold text-red-700">Sbagliati</span><span id="res-wrong" class="text-2xl font-extrabold text-red-600">0</span></div>
-      <div id="res-time-row" class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-3 rounded-2xl"><span class="font-bold text-blue-700">Tempo Rimasto</span><span id="res-time" class="text-2xl font-extrabold text-blue-600">0s</span></div>
-      <div id="res-wrong-clicks-row" class="hidden flex justify-between items-center bg-orange-50 border-2 border-orange-200 p-3 rounded-2xl"><span class="font-bold text-orange-700">Errori</span><span id="res-wrong-clicks" class="text-2xl font-extrabold text-orange-600">0</span></div>
-    </div>
-    <div id="typo-details" class="hidden mb-4">
-      <p class="text-xs font-bold text-slate-500 uppercase mb-2">Dettagli</p>
-      <ul id="typo-list" class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 max-h-32 overflow-y-auto"></ul>
-    </div>
-    <div class="mt-auto flex flex-col gap-2">
-      <button class="btn-cta" onclick="startGame(currentMode)">Rigioca</button>
-      <button class="btn-3d slate" onclick="exitGame()" style="justify-content:center; padding:10px;"><div class="label text-sm">Cambia modalità / zona</div></button>
-    </div>
-  </div>
-</div>
 
 
 
-<script src="./data.js"></script>
-<script src="./app.js"></script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(e=>console.log(e))})}</script>
+    <script src="./data.js"></script>
+    <script src="./app.js"></script>
+    <script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(e => console.log(e)) }) }</script>
 </body>
+
 </html>

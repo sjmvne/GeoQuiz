@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geoquiz-cache-v3';
+const CACHE_NAME = 'geoquiz-cache-v4';
 const urlsToCache = [
   './', './index.html', './app.css', './app.js', './data.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
@@ -7,7 +7,7 @@ const urlsToCache = [
   'https://unpkg.com/topojson-client@3',
   'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js',
   'https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap',
-  'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
+  'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json'
 ];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache))));
 self.addEventListener('fetch', e => {

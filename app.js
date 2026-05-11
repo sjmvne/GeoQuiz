@@ -1,5 +1,5 @@
 // ============= DATA =============
-const URL_WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const URL_WORLD = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 // Moved dictAmericas to data.js
 
 // ============= STATE =============
@@ -36,6 +36,7 @@ function selectZone(zoneId){
 function exitGame(){
   clearTimer();
   gameActive=false;
+  document.querySelectorAll('.bottom-sheet').forEach(s=>s.style.display='none');
   navigateTo('mode');
 }
 
@@ -84,7 +85,7 @@ function renderMap(){
     .attr('d',pathGenerator).attr('class','map-path')
     .on('click',handleMapClick)
     .on('mouseenter',showTooltip).on('mousemove',moveTooltip).on('mouseleave',hideTooltip);
-  zoomBehavior=d3.zoom().scaleExtent([1,8]).translateExtent([[0,0],[w,h]])
+  zoomBehavior=d3.zoom().scaleExtent([1,20]).translateExtent([[-w*.5,-h*.5],[w*1.5,h*1.5]])
     .on('zoom',e=>mapGroup.attr('transform',e.transform));
   svg.call(zoomBehavior);
 }
@@ -108,8 +109,10 @@ async function startGame(mode){
     $('sheet-click').style.display='none';
     $('sheet-type').style.display='none';
     $('sheet-explore').style.display='none';
+    $('sheet-results').style.display='none';
     $('time-badge').style.display='none';
     clearTimer();
+    resetMapClasses();
 
     if(mode==='explore'){
       $('sheet-explore').style.display='block';
