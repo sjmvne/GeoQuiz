@@ -79,7 +79,9 @@ function renderMap(){
   svg=d3.select(container).insert('svg',':first-child').attr('width','100%').attr('height','100%')
     .attr('viewBox',`0 0 ${w} ${h}`).attr('preserveAspectRatio','xMidYMid meet');
   mapGroup=svg.append('g');
-  const proj=d3.geoMercator().fitExtent([[-w*.05,-h*.05],[w*1.05,h*1.05]],geoData);
+  const fitFeatures = geoData.features.filter(f => d3.geoArea(f) > 0.002);
+  const proj=d3.geoMercator().fitExtent([[0,0],[w,h]], {type: "FeatureCollection", features: fitFeatures.length > 0 ? fitFeatures : geoData.features});
+  proj.clipExtent([[0,0],[w,h]]);
   pathGenerator=d3.geoPath().projection(proj);
   mapGroup.selectAll('path').data(geoData.features).enter().append('path')
     .attr('d',pathGenerator).attr('class','map-path')
@@ -316,22 +318,51 @@ function finishGame(title){
   $('res-correct').innerText=correct;
   $('res-wrong').innerText=wrong;
 
+  // Reset labels
+  $('lbl-correct').innerText = 'Esatti';
+  $('lbl-wrong-clicks').innerText = 'Errori';
+  $('leaderboard-area').classList.add('hidden');
+
   if(currentMode==='time'){
+    $('lbl-correct').innerText = 'Click Corretti';
+    $('lbl-wrong-clicks').innerText = 'Click Errati';
     $('res-wrong-row').classList.add('hidden');
     $('res-time-row').classList.remove('hidden');
     $('res-wrong-clicks-row').classList.remove('hidden');
     $('res-time').innerText=timeLeft+'s';
     $('res-wrong-clicks').innerText=timeAttackWrongClicks;
+    
+    const scores=JSON.parse(localStorage.getItem('geoquiz_scores')||'[]');
+    
+    const showLeaderboard = () => {
+      const zoneScores = scores.filter(s => s.zone === currentZone)
+                                .sort((a, b) => b.time - a.time);
+      if(zoneScores.length > 0){
+        $('leaderboard-area').classList.remove('hidden');
+        $('leaderboard-body').innerHTML = zoneScores.slice(0, 10).map((s, idx) => `
+          <tr class="border-b border-slate-100 last:border-0">
+            <td class="py-1 font-bold text-slate-500">${idx+1}</td>
+            <td class="py-1">${s.name}</td>
+            <td class="py-1 text-right font-bold text-blue-600">${s.time}s</td>
+          </tr>
+        `).join('');
+      }
+    };
+
     if(correct>0){
       setTimeout(()=>{
         const name=prompt("Ottimo tempo! Inserisci il tuo nome per la classifica:");
         if(name){
           const score={name,time:timeLeft,correct,date:new Date().toISOString(),zone:currentZone};
-          const scores=JSON.parse(localStorage.getItem('geoquiz_scores')||'[]');
           scores.push(score);
           localStorage.setItem('geoquiz_scores',JSON.stringify(scores));
+          showLeaderboard();
+        }else{
+          showLeaderboard();
         }
       },500);
+    }else{
+      showLeaderboard();
     }
   }else{
     $('res-wrong-row').classList.remove('hidden');

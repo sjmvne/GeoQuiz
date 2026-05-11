@@ -195,30 +195,48 @@
                 <h2 id="results-title" class="text-2xl font-extrabold text-slate-800">Risultati</h2>
             </div>
             <div class="flex flex-col gap-2 mb-4">
-                <div class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-3 rounded-2xl">
-                    <span class="font-bold text-green-700">Esatti</span><span id="res-correct"
-                        class="text-2xl font-extrabold text-green-600">0</span></div>
-                <div id="res-typos-row"
-                    class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-3 rounded-2xl">
-                    <span class="font-bold text-yellow-700">Typos</span><span id="res-typos"
-                        class="text-2xl font-extrabold text-yellow-600">0</span></div>
-                <div id="res-wrong-row"
-                    class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-3 rounded-2xl"><span
-                        class="font-bold text-red-700">Sbagliati</span><span id="res-wrong"
-                        class="text-2xl font-extrabold text-red-600">0</span></div>
-                <div id="res-time-row"
-                    class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-3 rounded-2xl">
-                    <span class="font-bold text-blue-700">Tempo Rimasto</span><span id="res-time"
-                        class="text-2xl font-extrabold text-blue-600">0s</span></div>
-                <div id="res-wrong-clicks-row"
-                    class="hidden flex justify-between items-center bg-orange-50 border-2 border-orange-200 p-3 rounded-2xl">
-                    <span class="font-bold text-orange-700">Errori</span><span id="res-wrong-clicks"
-                        class="text-2xl font-extrabold text-orange-600">0</span></div>
+                <div id="res-correct-row" class="flex justify-between items-center bg-green-50 border-2 border-green-200 p-3 rounded-2xl">
+                    <span class="font-bold text-green-700" id="lbl-correct">Esatti</span>
+                    <span id="res-correct" class="text-2xl font-extrabold text-green-600">0</span>
+                </div>
+                <div id="res-typos-row" class="hidden flex justify-between items-center bg-yellow-50 border-2 border-yellow-200 p-3 rounded-2xl">
+                    <span class="font-bold text-yellow-700">Typos</span>
+                    <span id="res-typos" class="text-2xl font-extrabold text-yellow-600">0</span>
+                </div>
+                <div id="res-wrong-row" class="flex justify-between items-center bg-red-50 border-2 border-red-200 p-3 rounded-2xl">
+                    <span class="font-bold text-red-700">Sbagliati</span>
+                    <span id="res-wrong" class="text-2xl font-extrabold text-red-600">0</span>
+                </div>
+                <div id="res-time-row" class="hidden flex justify-between items-center bg-blue-50 border-2 border-blue-200 p-3 rounded-2xl">
+                    <span class="font-bold text-blue-700">Tempo Rimasto</span>
+                    <span id="res-time" class="text-2xl font-extrabold text-blue-600">0s</span>
+                </div>
+                <div id="res-wrong-clicks-row" class="hidden flex justify-between items-center bg-orange-50 border-2 border-orange-200 p-3 rounded-2xl">
+                    <span class="font-bold text-orange-700" id="lbl-wrong-clicks">Errori</span>
+                    <span id="res-wrong-clicks" class="text-2xl font-extrabold text-orange-600">0</span>
+                </div>
+            </div>
+            <!-- Leaderboard Area -->
+            <div id="leaderboard-area" class="hidden mb-4">
+                <p class="text-xs font-bold text-slate-500 uppercase mb-2">Classifica (Time Attack)</p>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-40 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-xs text-slate-400 border-b border-slate-200">
+                                <th class="text-left pb-1">Pos</th>
+                                <th class="text-left pb-1">Nome</th>
+                                <th class="text-right pb-1">Tempo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="text-slate-700">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div id="typo-details" class="hidden mb-4">
                 <p class="text-xs font-bold text-slate-500 uppercase mb-2">Dettagli</p>
-                <ul id="typo-list"
-                    class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 max-h-32 overflow-y-auto">
+                <ul id="typo-list" class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 max-h-32 overflow-y-auto">
                 </ul>
             </div>
             <div class="mt-auto flex flex-col gap-2">
